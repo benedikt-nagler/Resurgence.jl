@@ -25,6 +25,13 @@ Named course-canon series with `n` exact rational coefficients:
   ``E_0(g) = \\tfrac12 + \\tfrac34 g - \\tfrac{21}{8} g^2 + \\tfrac{333}{16} g^3 - …``
   (exact rationals from the wavefunction recursion; large order
   ``E_n \\sim -(\\sqrt{6}/π^{3/2})\\,(-3)^n\\,Γ(n+\\tfrac12)``, instanton action 1/3).
+- `:phi4` — the zero-dimensional φ⁴ partition function
+  ``Z(g) = \\tfrac{1}{\\sqrt{2π}} ∫_{-∞}^{∞} e^{-x^2/2 - g x^4}\\,dx
+  = \\sum_{n≥0} \\tfrac{(-1)^n (4n-1)!!}{n!}\\, g^n``; the ``n``-th coefficient counts
+  the Wick contractions (vacuum Feynman diagrams) at order ``n``. Closed form
+  ``a_n = (-4)^n\\,Γ(2n+\\tfrac12)/(\\sqrt{π}\\, n!)``, large order
+  ``a_n \\sim (-16)^n\\,Γ(n+\\tfrac12)/\\sqrt{π}``; Borel singularity at
+  ``ζ = -1/16``, the action of the nontrivial saddle of ``x^2/2 + g x^4``.
 - `:exp` — the exponential ``\\sum_{k≥0} ħ^k / k!`` (convergent sanity example).
 """
 function FormalSeries(name::Symbol, n::Integer; var::Symbol = :ħ)
@@ -49,6 +56,14 @@ function FormalSeries(name::Symbol, n::Integer; var::Symbol = :ħ)
         FormalSeries(c, var)
     elseif name === :quartic
         FormalSeries(_bender_wu(n), var)
+    elseif name === :phi4
+        # a_n = (−1)^n (4n−1)!!/n!: a_{k+1} = −a_k (4k+1)(4k+3)/(k+1)
+        c = Vector{Rational{BigInt}}(undef, n)
+        c[1] = 1
+        for k in 0:(n - 2)
+            c[k + 2] = -c[k + 1] * Rational{BigInt}((4k + 1) * (4k + 3), k + 1)
+        end
+        FormalSeries(c, var)
     elseif name === :exp
         c = Vector{Rational{BigInt}}(undef, n)
         c[1] = 1
@@ -58,7 +73,7 @@ function FormalSeries(name::Symbol, n::Integer; var::Symbol = :ħ)
         FormalSeries(c, var)
     else
         throw(InvalidArgument("unknown named series :$name " *
-                              "(expected :euler, :airy, :airy_bi, :quartic, or :exp)"))
+                              "(expected :euler, :airy, :airy_bi, :quartic, :phi4, or :exp)"))
     end
 end
 
