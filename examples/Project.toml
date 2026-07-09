@@ -1,0 +1,4 @@
+[deps]
+CairoMakie       = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Resurgence       = "e14374e1-e109-4f80-b5da-7e76adde5713"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"

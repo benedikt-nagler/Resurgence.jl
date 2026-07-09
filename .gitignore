@@ -1,0 +1,4 @@
+Manifest.toml
+.DS_Store
+*.cov
+.ipynb_checkpoints/
