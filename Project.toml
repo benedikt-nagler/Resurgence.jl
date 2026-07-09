@@ -1,0 +1,25 @@
+name = "Resurgence"
+uuid = "e14374e1-e109-4f80-b5da-7e76adde5713"
+version = "0.1.0"
+authors = ["Benedikt Nagler <benedikt.nagler@protonmail.com>"]
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+
+[weakdeps]
+BaryRational = "91aaffc3-5777-4842-85b7-5d3d5d6a3494"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+
+[extensions]
+ResurgenceBaryRationalExt = "BaryRational"
+ResurgenceMakieExt = "Makie"
+
+[compat]
+BaryRational = "1"
+LinearAlgebra = "1"
+Makie = "0.24"
+PrecompileTools = "1"
+QuadGK = "2"
+julia = "1.10"

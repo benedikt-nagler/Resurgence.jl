@@ -1,0 +1,10 @@
+[deps]
+AbstractAlgebra  = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
+Aqua             = "4c88cf16-eb10-579e-8560-4a9242c79595"
+BaryRational     = "91aaffc3-5777-4842-85b7-5d3d5d6a3494"
+CairoMakie       = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Makie            = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+QuadGK           = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+Resurgence       = "e14374e1-e109-4f80-b5da-7e76adde5713"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+Test             = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
