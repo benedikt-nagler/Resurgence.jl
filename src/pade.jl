@@ -43,7 +43,7 @@ _horner(c::Vector, z) = foldr((cᵢ, acc) -> cᵢ + z * acc, c; init = zero(c[1]
 
 (r::PadeApproximant)(z) = _horner(r.p, z) / _horner(r.q, z)
 
-# Dense Gaussian elimination, in place; pivoting by the exactness trait — max-|·|
+# Dense Gaussian elimination, in place; pivoting by the exactness trait - max-|·|
 # for numeric types, first nonzero for exact rings (where `abs`/`one(::Type)` need
 # not exist, so LinearAlgebra's generic lu is unusable). Returns nothing on a
 # singular matrix.
@@ -101,7 +101,7 @@ ignoring the power offset). Works over any field; throws
 [`DegeneratePade`](@ref) when the Toeplitz system is singular. With
 `reduce = true` a singular system is instead retried at ``[L-1/M-1]`` (walking
 down the degeneracy block, by Baker's block theorem, until the system is regular
-or ``M = 0``) — the reduced approximant still matches the series through the
+or ``M = 0``) - the reduced approximant still matches the series through the
 originally requested order when the degeneracy is exact.
 """
 function pade(c::AbstractVector{T}, L::Integer, M::Integer; var::Symbol = :ζ,
@@ -156,13 +156,17 @@ end
 
 Zeros of the denominator ``q``: located via the companion-matrix eigenvalues in
 `ComplexF64`, then (with `refine = true`) polished by Newton iteration in
-`Complex{BigFloat}`. Sorted by absolute value — for a Borel–Padé approximant the
+`Complex{BigFloat}`. Sorted by absolute value - for a Borel–Padé approximant the
 smallest is the leading Borel singularity.
 """
 function poles(r::PadeApproximant; refine::Bool = true)
-    M = denominator_degree(r)
+    # trim trailing zero denominator coefficients: a reduced Padé (or an exact
+    # cancellation) can leave q with a zero leading coefficient, which is really a
+    # lower-degree denominator. For generic numeric Padé this is a no-op.
+    M = something(findlast(!iszero, r.q), 1) - 1
     M == 0 && return Complex{BigFloat}[]
-    q64 = ComplexF64.(Complex{BigFloat}.(r.q))
+    qtrim = r.q[1:(M + 1)]
+    q64 = ComplexF64.(Complex{BigFloat}.(qtrim))
     # companion matrix of q normalized to monic
     C = zeros(ComplexF64, M, M)
     for i in 2:M
@@ -172,7 +176,7 @@ function poles(r::PadeApproximant; refine::Bool = true)
     ζs = LinearAlgebra.eigvals(C)
     out = Complex{BigFloat}[Complex{BigFloat}(z) for z in ζs]
     if refine
-        qb = Complex{BigFloat}.(r.q)
+        qb = Complex{BigFloat}.(qtrim)
         dqb = [k * qb[k + 1] for k in 1:M]
         for (i, z) in pairs(out)
             for _ in 1:8
@@ -206,7 +210,7 @@ end
     borel_pade_poles(Φ::FormalSeries; beta = power_offset(Φ), order = nothing,
                      refine = true, reduce = false) -> Vector{Complex}
 
-The one-liner: Borel transform, Padé approximation, pole extraction — the Padé
+The one-liner: Borel transform, Padé approximation, pole extraction - the Padé
 estimate of the Borel-plane singularities of `Φ`.
 """
 function borel_pade_poles(Φ::FormalSeries;

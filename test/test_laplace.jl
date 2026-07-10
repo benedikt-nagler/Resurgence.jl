@@ -86,8 +86,9 @@ Resurgence.poles(::EulerDummyApprox; refine::Bool = true) = [Complex{BigFloat}(-
         # a hand-rolled approximant satisfying the interface reproduces Euler
         dummy = EulerDummyApprox()
         @test laplace_sum(B, dummy, ħ) ≈ laplace_sum(B, ħ; order = 1) rtol = 1e-40
-        # PoleOnRay fires through the seam (pole at −1, ray θ = π, ħ < 0 decays)
-        @test_throws PoleOnRay laplace_sum(B, dummy, -ħ; θ = Float64(π))
+        # PoleOnRay fires through the seam (pole at −1, ray θ = π, ħ < 0 decays);
+        # Float64 ħ keeps the on-ray tolerance loose enough for the Float64-π angle
+        @test_throws PoleOnRay laplace_sum(B, dummy, -0.3; θ = Float64(π))
         # lateral sums and the Stokes discontinuity through the seam
         @test lateral_sum(B, dummy, -ħ; θ = Float64(π), side = :plus) ≈
               lateral_sum(B, -ħ; θ = Float64(π), side = :plus, order = 1) rtol = 1e-40
@@ -99,7 +100,7 @@ Resurgence.poles(::EulerDummyApprox; refine::Bool = true) = [Complex{BigFloat}(-
         setprecision(BigFloat, 512) do
             # reference Ai(1) from the Taylor series y'' = zy at 0, with
             # Ai(0) = 3^{-2/3}/Γ(2/3), Ai'(0) = -3^{-1/3}/Γ(1/3),
-            # Γ(2/3) = 2π/(√3 Γ(1/3)) — Γ(1/3) from _gamma (validated above)
+            # Γ(2/3) = 2π/(√3 Γ(1/3)) - Γ(1/3) from _gamma (validated above)
             f1 = zero(BigFloat); c = big"1.0"
             g1 = zero(BigFloat); d = big"1.0"
             for k in 0:60
@@ -116,7 +117,7 @@ Resurgence.poles(::EulerDummyApprox; refine::Bool = true) = [Complex{BigFloat}(-
             # Borel–Padé–Laplace of the asymptotic series at z = 1: the series is
             # in ħ = z^{-3/2} = 1, with ξ = 2/(3ħ) = 2/3. High-order Padé grows
             # spurious Froissart pole–zero doublets near the positive axis, so
-            # integrate on a tilted ray (exact by contour deformation — the true
+            # integrate on a tilted ray (exact by contour deformation - the true
             # Borel function is analytic off the cut ζ ≤ -4/3).
             Φ = FormalSeries(:airy, 220)
             Φb = FormalSeries(BigFloat.(coefficients(Φ)))
