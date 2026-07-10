@@ -86,8 +86,9 @@ Resurgence.poles(::EulerDummyApprox; refine::Bool = true) = [Complex{BigFloat}(-
         # a hand-rolled approximant satisfying the interface reproduces Euler
         dummy = EulerDummyApprox()
         @test laplace_sum(B, dummy, ħ) ≈ laplace_sum(B, ħ; order = 1) rtol = 1e-40
-        # PoleOnRay fires through the seam (pole at −1, ray θ = π, ħ < 0 decays)
-        @test_throws PoleOnRay laplace_sum(B, dummy, -ħ; θ = Float64(π))
+        # PoleOnRay fires through the seam (pole at −1, ray θ = π, ħ < 0 decays);
+        # Float64 ħ keeps the on-ray tolerance loose enough for the Float64-π angle
+        @test_throws PoleOnRay laplace_sum(B, dummy, -0.3; θ = Float64(π))
         # lateral sums and the Stokes discontinuity through the seam
         @test lateral_sum(B, dummy, -ħ; θ = Float64(π), side = :plus) ≈
               lateral_sum(B, -ħ; θ = Float64(π), side = :plus, order = 1) rtol = 1e-40

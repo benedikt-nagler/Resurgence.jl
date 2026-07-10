@@ -160,9 +160,13 @@ Zeros of the denominator ``q``: located via the companion-matrix eigenvalues in
 smallest is the leading Borel singularity.
 """
 function poles(r::PadeApproximant; refine::Bool = true)
-    M = denominator_degree(r)
+    # trim trailing zero denominator coefficients: a reduced Padé (or an exact
+    # cancellation) can leave q with a zero leading coefficient, which is really a
+    # lower-degree denominator. For generic numeric Padé this is a no-op.
+    M = something(findlast(!iszero, r.q), 1) - 1
     M == 0 && return Complex{BigFloat}[]
-    q64 = ComplexF64.(Complex{BigFloat}.(r.q))
+    qtrim = r.q[1:(M + 1)]
+    q64 = ComplexF64.(Complex{BigFloat}.(qtrim))
     # companion matrix of q normalized to monic
     C = zeros(ComplexF64, M, M)
     for i in 2:M
@@ -172,7 +176,7 @@ function poles(r::PadeApproximant; refine::Bool = true)
     ζs = LinearAlgebra.eigvals(C)
     out = Complex{BigFloat}[Complex{BigFloat}(z) for z in ζs]
     if refine
-        qb = Complex{BigFloat}.(r.q)
+        qb = Complex{BigFloat}.(qtrim)
         dqb = [k * qb[k + 1] for k in 1:M]
         for (i, z) in pairs(out)
             for _ in 1:8

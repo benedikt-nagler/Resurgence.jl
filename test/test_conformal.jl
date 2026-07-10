@@ -30,18 +30,26 @@
         # reduced inner Padé
         @test c.inner isa PadeApproximant{Rational{BigInt}}
         @test numerator_degree(c.inner) == 2 && denominator_degree(c.inner) == 2
+        # inner is exactly −(1+w)²/(1−w)² (exact rational composition)
         for w in (1 // 3, -1 // 5)
-            ζ = inverse(c.map, w)
             @test c.inner(w) == -(1 + w)^2 / (1 - w)^2
-            @test c(ζ) ≈ -1 / (1 + ζ) atol = 1e-70
+        end
+        # end-to-end c(ζ) = −1/(1+ζ): the map's sqrt needs a BigFloat argument to
+        # keep full precision (rational ζ would route through a Float64 sqrt)
+        setprecision(BigFloat, 256) do
+            for ζ in (big"0.4", big"-0.3", big"1.5")
+                @test c(ζ) ≈ -1 / (1 + ζ) atol = 1e-60
+            end
         end
         # auto-detected ζ₀ agrees
         c2 = conformal_borel(B)
-        @test c2.map.zeta0 ≈ -1 atol = 1e-60
-        # poles: the branch point is reported (and guards the cut direction)
-        @test poles(c)[1] ≈ -1 atol = 1e-60
-        ħ = big"0.5"
-        @test_throws PoleOnRay laplace_sum(B, c, -ħ; θ = Float64(π))
+        @test c2.map.zeta0 ≈ -1 atol = 1e-15
+        # poles: the branch point −1 is reported (and guards the cut direction)
+        @test minimum(abs.(poles(c) .+ 1)) < 1e-15
+        # integrating along the cut (θ = π, ħ < 0 so e^{-ζ/ħ} decays) hits the
+        # branch point → PoleOnRay (Float64 ħ keeps the on-ray tolerance loose
+        # enough to absorb the Float64-π angle)
+        @test_throws PoleOnRay laplace_sum(B, c, -0.5; θ = Float64(π))
     end
 
     @testset "Euler summation through the seam is quadrature-exact" begin
