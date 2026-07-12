@@ -26,11 +26,14 @@ export subtract_singularity
 export dingle_terminant, optimal_truncation, hyper_sum
 export Transseries, action, n_sectors, sector, sectors, transseries_sum
 export stokes_constant, alien_derivative, stokes_automorphism, median_sum
+export MultiTransseries, actions, n_actions, sector_indices, weight, is_resonant
+export pointed_alien_derivative
 export plot_borel_plane, aaa_approximant, aaa_borel
 
 include("errors.jl")
 include("formal_series.jl")
 include("transseries.jl")
+include("multi_transseries.jl")
 include("named_series.jl")
 include("borel.jl")
 include("pade.jl")
@@ -41,6 +44,7 @@ include("conformal.jl")
 include("singularities.jl")
 include("hyperasymptotics.jl")
 include("alien.jl")
+include("multi_alien.jl")
 include("show.jl")
 
 """
@@ -102,6 +106,10 @@ end
         alien_derivative(F; stokes = -2 * BigFloat(π) * im)
         F + F
         sprint(show, F)
+        mt = MultiTransseries(F)
+        alien_derivative(mt; stokes = -2 * BigFloat(π) * im)
+        mt + mt
+        sprint(show, mt)
     end
 end
 

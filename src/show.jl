@@ -82,6 +82,24 @@ function Base.show(io::IO, F::Transseries{T}) where {T}
           "Φ₀ = ", _series_string(F.sectors[1].coeffs, F.var, F.sectors[1].power_offset))
 end
 
+function Base.show(io::IO, mt::MultiTransseries{T,A,K}) where {T,A,K}
+    idxs = sector_indices(mt)
+    n0 = idxs[1]
+    Φ0 = mt.sectors[n0]
+    print(io, "MultiTransseries{$T} (A = $(mt.actions), rank $K, ",
+          "$(n_sectors(mt)) sectors in $(mt.var)): ",
+          "Φ_$(n0) = ", _series_string(Φ0.coeffs, mt.var, Φ0.power_offset))
+end
+
+function Base.show(io::IO, ::MIME"text/latex", mt::MultiTransseries{T,A,K}) where {T,A,K}
+    idxs = sector_indices(mt)
+    n0 = idxs[1]
+    Φ0 = mt.sectors[n0]
+    print(io, "\$\\sum_{n \\in \\mathbb{Z}_{\\geq 0}^{$K}} \\sigma^n ",
+          "e^{-(n\\cdot A)/$(mt.var)}\\,\\Phi_n, \\quad \\Phi_{$(n0)} = ",
+          _series_string(Φ0.coeffs, mt.var, Φ0.power_offset; latex = true), "\$")
+end
+
 function Base.show(io::IO, ::MIME"text/latex", F::Transseries)
     A = F.action
     As = A isa Rational ?
