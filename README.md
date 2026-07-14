@@ -4,7 +4,7 @@ A Julia package for resurgence: Borel summation, Stokes phenomena, and large-ord
 
 ## Introduction
 
-Perturbative expansions in quantum mechanics and quantum field theory typically have zero radius of convergence. For example, for the quartic anharmonic oscillator the coefficients grow like $n!\,3^n$.
+Perturbative expansions in quantum mechanics and quantum field theory typically have zero radius of convergence.=
 
 [Resurgence theory](https://en.wikipedia.org/wiki/Resurgent_function) (Écalle) handles such series through the **Borel transform**. For $\Phi(\hbar) = \sum_n a_n \hbar^{n+\beta}$,
 
@@ -12,7 +12,7 @@ $$\hat{B}(\zeta) = \sum_{n} \frac{a_n}{\Gamma(n+\beta)}\, \zeta^{\,n+\beta-1}$$
 
 converges on a disk, and the Laplace integral $\int_0^\infty e^{-\zeta/\hbar}\,\hat{B}(\zeta)\,d\zeta$ resums the series. The singularities of $\hat{B}$ sit at the instanton actions $A$ of the problem: they determine the growth $a_n \sim S\,\Gamma(n+b)/A^n$ of the coefficients and correspond to the exponentially small effects $e^{-A/\hbar}$ that the series misses. A singularity on the integration ray makes the two lateral sums differ by such a term, and this is called the **Stokes phenomenon**.
 
-These structures show up in many places: anharmonic oscillators and double wells, exact WKB and spectral problems, matrix models and topological strings, Painlevé equations. The notebook [Divergent series in physics](examples/divergent_perturbation_theory.ipynb) works through the basic toolbox of the package on the Euler, quartic-oscillator, and Airy series.
+These structures show up in many places: anharmonic oscillators and double wells, exact WKB and spectral problems, matrix models and topological strings. The notebook [resurgence in perturbation theory](examples/divergent_perturbation_theory.ipynb) walks through the basic toolbox of the package on the Euler, quartic-oscillator, and Airy series.
 
 ## Features
 
