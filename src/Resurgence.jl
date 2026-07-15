@@ -28,7 +28,8 @@ export Transseries, action, n_sectors, sector, sectors, transseries_sum
 export stokes_constant, alien_derivative, stokes_automorphism, median_sum
 export MultiTransseries, actions, n_actions, sector_indices, weight, is_resonant
 export pointed_alien_derivative
-export plot_borel_plane, aaa_approximant, aaa_borel
+export plot_borel_plane, plot_large_order, plot_optimal_truncation
+export aaa_approximant, aaa_borel
 
 include("errors.jl")
 include("formal_series.jl")
@@ -55,11 +56,49 @@ overlaid. Implemented in the Makie package extension — load a Makie backend
 (e.g. `using CairoMakie`) first.
 """
 function plot_borel_plane(args...; kwargs...)
-    if isempty(args) || args[1] isa Union{BorelSeries,PadeApproximant}
+    if isempty(args) || args[1] isa BorelSeries ||
+       args[1] isa AbstractBorelApproximant ||
+       args[1] isa AbstractVector{<:AbstractBorelApproximant}
         error("plot_borel_plane requires a Makie backend: run `using CairoMakie` " *
               "(or GLMakie) and retry")
     else
         throw(MethodError(plot_borel_plane, args))
+    end
+end
+
+"""
+    plot_large_order(Φ::FormalSeries; kwargs...)
+
+Ratio-test diagnostic for the factorial growth of `Φ`: the sequence
+`|aₙ/aₙ₋₁| / n` tends to `1/A`, where `A` is the distance to the nearest Borel
+singularity. Overlays the asymptote from [`large_order_fit`](@ref). Implemented
+in the Makie package extension — load a backend (`using CairoMakie`) first.
+"""
+function plot_large_order(args...; kwargs...)
+    if isempty(args) || args[1] isa FormalSeries
+        error("plot_large_order requires a Makie backend: run `using CairoMakie` " *
+              "(or GLMakie) and retry")
+    else
+        throw(MethodError(plot_large_order, args))
+    end
+end
+
+"""
+    plot_optimal_truncation(Φ::FormalSeries, ħ; kwargs...)
+    plot_optimal_truncation(Φ::FormalSeries, ħs::AbstractVector; kwargs...)
+
+The superasymptotic error curve: term magnitudes `|aₙ ħ^{pₙ}|` versus truncation
+order `N` (log scale), with the optimal-truncation minimum `N⋆` from
+[`optimal_truncation`](@ref) marked. Passing a vector of couplings overlays one
+U-curve per `ħ`. Implemented in the Makie package extension — load a backend
+(`using CairoMakie`) first.
+"""
+function plot_optimal_truncation(args...; kwargs...)
+    if length(args) ≥ 1 && args[1] isa FormalSeries
+        error("plot_optimal_truncation requires a Makie backend: run " *
+              "`using CairoMakie` (or GLMakie) and retry")
+    else
+        throw(MethodError(plot_optimal_truncation, args))
     end
 end
 
