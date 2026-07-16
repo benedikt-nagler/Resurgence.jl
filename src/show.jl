@@ -82,22 +82,45 @@ function Base.show(io::IO, F::Transseries{T}) where {T}
           "Φ₀ = ", _series_string(F.sectors[1].coeffs, F.var, F.sectors[1].power_offset))
 end
 
-function Base.show(io::IO, mt::MultiTransseries{T,A,K}) where {T,A,K}
-    idxs = sector_indices(mt)
-    n0 = idxs[1]
-    Φ0 = mt.sectors[n0]
+# One-line preview of a sector, whichever type it is - keeps the MultiTransseries show
+# path from reaching into a FormalSeries' fields, which a LogSeries sector does not have.
+_sector_preview(Φ::FormalSeries; latex::Bool = false) =
+    _series_string(Φ.coeffs, Φ.var, Φ.power_offset; latex)
+
+function _sector_preview(L::LogSeries; latex::Bool = false)
+    parts = map(0:log_degree(L)) do p
+        body = _series_string(L.blocks[p + 1].coeffs, L.var, L.blocks[p + 1].power_offset;
+                              latex)
+        p == 0 && return body
+        lg = latex ? "\\log^{$p} $(L.var)" : "log^$p($(L.var))"
+        p == 1 && (lg = latex ? "\\log $(L.var)" : "log($(L.var))")
+        "$lg ($body)"
+    end
+    join(parts, " + ")
+end
+
+function Base.show(io::IO, L::LogSeries{T}) where {T}
+    print(io, "LogSeries{$T} (log-degree $(log_degree(L)) in $(L.var)): ",
+          _sector_preview(L))
+end
+
+function Base.show(io::IO, ::MIME"text/latex", L::LogSeries)
+    print(io, "\$", _sector_preview(L; latex = true), "\$")
+end
+
+function Base.show(io::IO, mt::MultiTransseries{T,A,K,S}) where {T,A,K,S}
+    n0 = sector_indices(mt)[1]
     print(io, "MultiTransseries{$T} (A = $(mt.actions), rank $K, ",
-          "$(n_sectors(mt)) sectors in $(mt.var)): ",
-          "Φ_$(n0) = ", _series_string(Φ0.coeffs, mt.var, Φ0.power_offset))
+          "$(n_sectors(mt)) sectors in $(mt.var)")
+    S <: LogSeries && print(io, ", log-degree ≤ $(log_degree(mt))")
+    print(io, "): Φ_$(n0) = ", _sector_preview(mt.sectors[n0]))
 end
 
 function Base.show(io::IO, ::MIME"text/latex", mt::MultiTransseries{T,A,K}) where {T,A,K}
-    idxs = sector_indices(mt)
-    n0 = idxs[1]
-    Φ0 = mt.sectors[n0]
+    n0 = sector_indices(mt)[1]
     print(io, "\$\\sum_{n \\in \\mathbb{Z}_{\\geq 0}^{$K}} \\sigma^n ",
           "e^{-(n\\cdot A)/$(mt.var)}\\,\\Phi_n, \\quad \\Phi_{$(n0)} = ",
-          _series_string(Φ0.coeffs, mt.var, Φ0.power_offset; latex = true), "\$")
+          _sector_preview(mt.sectors[n0]; latex = true), "\$")
 end
 
 function Base.show(io::IO, ::MIME"text/latex", F::Transseries)
