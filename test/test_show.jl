@@ -48,3 +48,23 @@
     @test occursin("\\frac{-4}{3}",
                    sprint(show, MIME"text/latex"(), Transseries(:airy, 3)))
 end
+
+@testset "show: log sectors" begin
+    logh = LogSeries([FormalSeries([0//1]), FormalSeries([1//1])])
+    s = sprint(show, logh)
+    @test startswith(s, "LogSeries")
+    @test occursin("log-degree 1", s) && occursin("log(ħ)", s)
+    l = sprint(show, MIME"text/latex"(), logh)
+    @test occursin("\\log ħ", l)
+    # degree ≥ 2 renders the power
+    L2 = LogSeries([FormalSeries([1//1]), FormalSeries([0//1]), FormalSeries([2//1])])
+    @test occursin("log^2(ħ)", sprint(show, L2))
+    @test occursin("\\log^{2} ħ", sprint(show, MIME"text/latex"(), L2))
+    # a resonant MultiTransseries advertises its log degree; a non-resonant one does not
+    R = MultiTransseries((1//1, -1//1), Dict((0, 0) => logh))
+    sr = sprint(show, R)
+    @test startswith(sr, "MultiTransseries") && occursin("log-degree ≤ 1", sr)
+    P = MultiTransseries((1//1, -1//1), Dict((0, 0) => FormalSeries([1//1])))
+    @test !occursin("log-degree", sprint(show, P))
+    @test occursin("\\Phi_{(0, 0)}", sprint(show, MIME"text/latex"(), R))
+end

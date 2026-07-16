@@ -127,4 +127,56 @@ end
             @test abs(imag(med)) < big"1e-40"
         end
     end
+
+    @testset "log sectors and the ω-fiber (M6b)" begin
+        Λ = LogSeries([FormalSeries([1//1]), FormalSeries([2//1])])   # 1 + 2 log ħ
+        R = MultiTransseries((1//1, -1//1), Dict((i, j) => Λ for i in 0:2, j in 0:2))
+
+        @testset "Δ is ℂ[log ħ]-linear" begin
+            # log ħ has no Borel singularity away from ζ = 0, so Δ_ω(log ħ) = 0 and the
+            # alien derivative acts blockwise — it commutes with taking a log block.
+            D = alien_derivative(R, (1, 0); stokes = 3//1)
+            for n in ((0, 0), (1, 1), (0, 2)), p in 0:1
+                blockwise = MultiTransseries((1//1, -1//1),
+                                             Dict(k => log_block(v, p)
+                                                  for (k, v) in sectors(R)))
+                Dp = alien_derivative(blockwise, (1, 0); stokes = 3//1)
+                @test log_block(sector(D, n), p) == sector(Dp, n)
+            end
+            @test sector(D, (0, 0)) isa LogSeries
+            @test log_degree(D) == 1
+        end
+
+        @testset "ω-fiber method" begin
+            # K = 1 non-resonant: the fiber over ω = A is the single charge (1,)
+            M = MultiTransseries(Transseries(:euler, 6))
+            @test charges(M, 1//1) == [(1,)]
+            @test alien_derivative(M, 1//1; stokes = -2π * im) ==
+                  alien_derivative(M, (1,); stokes = -2π * im)
+            # resonant: ω = A collects the whole tower, each charge with its own constant
+            @test charges(R, 1//1) == [(1, 0), (2, 1)]
+            S = Dict((1, 0) => 1//1, (2, 1) => 5//1)
+            μ = (n, l) -> 1                                  # the model supplies this
+            fiber = alien_derivative(R, 1//1; stokes = S, multiplicity = μ)
+            summed = alien_derivative(R, (1, 0); stokes = S, multiplicity = μ) +
+                     alien_derivative(R, (2, 1); stokes = S, multiplicity = μ)
+            @test fiber == summed
+            # the tower's higher charges are mixed, so a resonant fiber cannot be taken
+            # without a multiplicity — the guard reaches through the ω method too
+            @test_throws InvalidArgument alien_derivative(R, 1//1; stokes = S)
+            # no charge over ω
+            @test_throws InvalidArgument alien_derivative(R, 99//1; stokes = 1//1)
+        end
+
+        @testset "the mixed-charge guard stays locked" begin
+            # Resonance is *why* it is model-dependent: the weight-0 kernel monomial σ₁σ₂
+            # can appear to any power without breaking the grading, so Δ_ω admits an
+            # unconstrained tower of independent Stokes data. No universal formula exists.
+            @test_throws InvalidArgument alien_derivative(R, (1, 1); stokes = 1//1)
+            @test_throws InvalidArgument alien_derivative(R, (2, 1); stokes = 1//1)
+            # …but an explicit multiplicity is honored
+            D = alien_derivative(R, (1, 1); stokes = 1//1, multiplicity = (n, l) -> 1)
+            @test sector(D, (0, 0)) == Λ
+        end
+    end
 end
