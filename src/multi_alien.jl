@@ -44,6 +44,20 @@ is model-dependent and requires an explicit `multiplicity = (n, ℓ) -> Number`.
 Passing a `Vector` of charges composes the derivatives ``Δ_{ℓ_r} ∘ ⋯ ∘ Δ_{ℓ_1}`` (first
 element applied innermost). Reduces to the one-parameter [`alien_derivative`](@ref) under
 the rank-1 embedding.
+
+`Δ_ω` is ``ℂ[\\log ħ]``-linear — `log ħ` has no Borel singularity away from `ζ = 0`, so
+`Δ_ω(log ħ) = 0` — hence this acts blockwise on resonant sectors and needs no special
+casing for them. To index by **singularity location** rather than charge, see
+[`alien_derivative(F, ω::Number)`](@ref).
+
+!!! note "Why the mixed-charge multiplicity is model-dependent"
+    Resonance is the reason, and it does not go away. When the lattice has a kernel
+    vector `k` (see [`resonance_lattice`](@ref)), the kernel monomial — `σ₁σ₂` for
+    `A = (A, -A)` — has weight zero, so it can appear to *any* power without violating
+    the weight grading. The bridge equation then admits an unconstrained tower
+    ``Δ_ω F = \\sum_j S_{ℓ_0 + jk}\\,(σ₁σ₂)^j·(\\text{derivation})`` of independent
+    Stokes data — for Painlevé I these are exactly the extra Stokes constants. No
+    universal formula can pick them; supply `multiplicity` from your model.
 """
 function alien_derivative(F::MultiTransseries{T,A,K}, ℓ::NTuple{K,Integer};
                           stokes, multiplicity = nothing) where {T,A,K}
@@ -65,13 +79,23 @@ function alien_derivative(F::MultiTransseries{T,A,K}, ℓ::NTuple{K,Integer};
     kept = [(src .- ℓi) => (S * μ(src .- ℓi, ℓi)) * Φ
             for (src, Φ) in F.sectors if all(≥(0), src .- ℓi)]
     d = if isempty(kept)
-        z = zero(S * first(values(F.sectors)).coeffs[1])
-        Dict(ntuple(_ -> 0, K) => FormalSeries([z], F.var))
+        z = zero(S * _first_coeff(first(values(F.sectors))))
+        Dict(ntuple(_ -> 0, K) => _promote_sector(FormalSeries([z], F.var),
+                                                  _sector_type_of(F, typeof(z))))
     else
         Dict(kept)
     end
     MultiTransseries(F.actions, d; var = F.var)
 end
+
+_first_coeff(Φ::FormalSeries) = Φ.coeffs[1]
+_first_coeff(L::LogSeries) = _first_coeff(L.blocks[1])
+
+# keep an empty result's sector type in step with the operand's (log-free stays log-free)
+_sector_type_of(::MultiTransseries{T,A,K,S}, ::Type{Tz}) where {T,A,K,S<:FormalSeries,Tz} =
+    FormalSeries{Tz}
+_sector_type_of(::MultiTransseries{T,A,K,S}, ::Type{Tz}) where {T,A,K,S<:LogSeries,Tz} =
+    LogSeries{Tz}
 
 alien_derivative(F::MultiTransseries{T,A,K}; stokes, multiplicity = nothing) where {T,A,K} =
     alien_derivative(F, _unit(K, 1); stokes, multiplicity)
@@ -83,6 +107,37 @@ function alien_derivative(F::MultiTransseries, ℓs::AbstractVector; stokes,
         G = alien_derivative(G, ℓ; stokes, multiplicity)
     end
     G
+end
+
+"""
+    alien_derivative(F::MultiTransseries, ω::Number; stokes, multiplicity = nothing)
+        -> MultiTransseries
+
+The alien derivative at a **singularity location** ``ω`` in the Borel plane, as opposed to
+at a lattice charge: the sum of `Δ_{ℓ·A}` over the whole fiber
+[`charges`](@ref)`(F, ω)` = ``\\{ℓ ≽ 0 : ℓ·A = ω\\}`` inside the support's bounding box.
+
+Note the argument-type distinction, which is the whole point of this method: an `NTuple`
+is a **charge**, a `Number` is a **location**. (The one-parameter
+[`alien_derivative(::Transseries, l::Integer)`](@ref) indexes charges, not locations.) At
+a non-resonant lattice the fiber is a single charge and the two agree; at a resonant one
+the fiber is a tower — for `A = (A, -A)`, `ω = A` collects `(1,0), (2,1), (3,2), …` — and
+each charge carries its own Stokes constant, so pass `stokes` as a `Dict` or callable.
+
+Throws `InvalidArgument` when no charge in the box lies over `ω`.
+"""
+function alien_derivative(F::MultiTransseries{T,A,K}, ω::Number; stokes,
+                          multiplicity = nothing) where {T,A,K}
+    fiber = charges(F, ω)
+    isempty(fiber) &&
+        throw(InvalidArgument("no lattice charge in the support's bounding box lies over " *
+                              "the singularity ω = $ω (actions $(F.actions))"))
+    acc = nothing
+    for ℓ in fiber
+        term = alien_derivative(F, ℓ; stokes, multiplicity)
+        acc = acc === nothing ? term : acc + term
+    end
+    acc
 end
 
 """
@@ -167,8 +222,7 @@ function stokes_automorphism(F::MultiTransseries{T,A,K}; stokes, θ::Real = 0,
     cap = order === nothing ? sum(_bounding_box(F)) + 1 : order
     for m in 1:cap
         term = _stokes_generator(term, stokes, θ)
-        (term === nothing || all(all(iszero, Φ.coeffs) for Φ in values(term.sectors))) &&
-            break
+        (term === nothing || all(_is_zero_series, values(term.sectors))) && break
         acc = acc + (1 // factorial(big(m))) * term
     end
     acc

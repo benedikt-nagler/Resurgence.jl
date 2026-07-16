@@ -172,6 +172,36 @@ function Base.truncate(Φ::FormalSeries, n::Integer)
 end
 
 """
+    derivative(Φ::FormalSeries) -> FormalSeries
+
+The termwise derivative ``∂_x``: ``x^{β_0} \\sum a_n x^n \\mapsto x^{β_0 - 1}
+\\sum (β_0 + n) a_n x^n``. Exact in the coefficient type whenever the powers are
+integral. The companion operator ``x^2 ∂_x`` — the one that governs transseries sector
+equations, see [`resonant_solve`](@ref) — is `_shift_power(derivative(Φ), 2)`.
+"""
+function derivative(Φ::FormalSeries)
+    β = Φ.power_offset
+    c = [_power_factor(β + (k - 1)) * Φ.coeffs[k] for k in eachindex(Φ.coeffs)]
+    FormalSeries(c, Φ.var; power_offset = β - 1)
+end
+
+# an integral power multiplies exactly in T; a fractional one has to go through Rational
+_power_factor(p::Rational{Int}) = denominator(p) == 1 ? numerator(p) : p
+
+# multiply by x^s (s an integer): shift the leading power, keep the coefficients
+_shift_power(Φ::FormalSeries, s::Integer) =
+    FormalSeries(Φ.coeffs, Φ.var; power_offset = Φ.power_offset + s)
+
+# the coefficient of x^p, honoring power_offset (zero when the power grid misses p)
+function _coeff_at(Φ::FormalSeries{T}, p::Rational{Int}) where {T}
+    m = p - Φ.power_offset
+    (denominator(m) == 1 && 0 ≤ numerator(m)) || return zero(Φ.coeffs[1])
+    Φ[Int(numerator(m))]
+end
+
+_is_zero_series(Φ::FormalSeries) = all(iszero, Φ.coeffs)
+
+"""
     evaluate(Φ::FormalSeries, x) -> Number
 
 Evaluate the truncated series at `x` (Horner on the polynomial part, times
