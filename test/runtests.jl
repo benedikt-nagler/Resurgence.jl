@@ -12,6 +12,7 @@ using QuadGK: quadgk
     end
     include("test_errors.jl")
     include("test_formal_series.jl")
+    include("test_log_series.jl")
     include("test_named_series.jl")
     include("test_borel.jl")
     include("test_pade.jl")
@@ -23,6 +24,7 @@ using QuadGK: quadgk
     include("test_hyperasymptotics.jl")
     include("test_transseries.jl")
     include("test_multi_transseries.jl")
+    include("test_resonance.jl")
     include("test_alien.jl")
     include("test_multi_alien.jl")
     include("test_show.jl")

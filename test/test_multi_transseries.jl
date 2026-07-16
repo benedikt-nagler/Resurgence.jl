@@ -104,4 +104,59 @@
             @test_throws InvalidArgument transseries_sum(M, (σ, σ), ħ; order = 1)
         end
     end
+
+    @testset "log sectors (M6b)" begin
+        # The M6a suite above is the regression gate: the trailing sector-type parameter S
+        # must be inert for non-resonant transseries. Here S = LogSeries.
+        Λ = LogSeries([FormalSeries([0//1]), FormalSeries([1//1])])       # log ħ
+        R = MultiTransseries((1//1, -1//1), Dict((0, 0) => Λ, (1, 1) => Λ))
+
+        @testset "sector type" begin
+            @test R isa MultiTransseries{Rational{Int},Rational{Int},2}   # UnionAll still
+            @test sector(R, (0, 0)) isa LogSeries
+            @test sector(R, (5, 5)) isa LogSeries                         # absent ⇒ zero
+            @test log_degree(R) == 1
+            @test log_degree(R, (0, 0)) == 1
+            @test log_degree(R, 1, 1) == 1
+            # a non-resonant transseries keeps FormalSeries sectors and log_degree 0
+            @test sector(F, (0, 0)) isa FormalSeries
+            @test log_degree(F) == 0
+            @test log_degree(F, (1, 1)) == 0
+        end
+
+        @testset "mixed operands promote to LogSeries" begin
+            P = MultiTransseries((1//1, -1//1), Dict((0, 0) => FormalSeries([1//1])))
+            @test sector(P, (0, 0)) isa FormalSeries
+            for S in (R + P, P + R, R * P, P * R)
+                @test sector(S, (0, 0)) isa LogSeries
+            end
+            @test log_block(sector(R + P, (0, 0)), 0) == FormalSeries([1//1])
+            @test log_block(sector(R + P, (0, 0)), 1) == FormalSeries([1//1])
+            # FormalSeries-only operands stay FormalSeries - no silent widening
+            @test sector(P + P, (0, 0)) isa FormalSeries
+        end
+
+        @testset "graded product: log degrees add, the n-box takes the min" begin
+            Q = R * R
+            @test log_degree(sector(Q, (0, 0))) == 2              # 1 + 1
+            @test log_block(sector(Q, (0, 0)), 2) == FormalSeries([1//1])
+            @test Resurgence._bounding_box(Q) == (1, 1)            # min of the boxes
+        end
+
+        @testset "truncate reaches both indices" begin
+            L2 = LogSeries([FormalSeries([1//1, 2//1]), FormalSeries([3//1, 4//1])])
+            T = MultiTransseries((1//1, -1//1), Dict((0, 0) => L2, (1, 1) => L2))
+            @test n_terms(sector(truncate(T; terms = 1), (0, 0))) == 1
+            @test log_degree(sector(truncate(T; terms = 1), (0, 0))) == 1
+            @test n_sectors(truncate(T; degree = (0, 0))) == 1
+        end
+
+        @testset "projection to Transseries refuses genuine log blocks" begin
+            R1 = MultiTransseries((1//1,), Dict((0,) => Λ))
+            @test_throws IncompatibleSeries Transseries(R1)
+            # a log-free LogSeries sector projects fine (round-trip preserved)
+            R0 = MultiTransseries((1//1,), Dict((0,) => LogSeries(FormalSeries([2//1]))))
+            @test sector(Transseries(R0), 0) == FormalSeries([2//1])
+        end
+    end
 end
