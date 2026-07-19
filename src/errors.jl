@@ -39,7 +39,7 @@ end
 """
     DegeneratePade(L, M)
 
-Thrown when the Toeplitz system of the `[L/M]` Padé approximant is singular — the
+Thrown when the Toeplitz system of the `[L/M]` Padé approximant is singular - the
 underlying function admits a lower-degree rational representation. Request a lower
 order, or pass `reduce = true` to [`pade`](@ref) for automatic degree reduction.
 """
@@ -50,14 +50,14 @@ end
 
 function Base.showerror(io::IO, e::DegeneratePade)
     print(io, "DegeneratePade: the [$(e.L)/$(e.M)] Padé system is singular; ",
-          "the series is matched by a lower-degree rational function — ",
+          "the series is matched by a lower-degree rational function - ",
           "request a lower order or pass `reduce = true` for automatic reduction")
 end
 
 """
     NoSingularityFound(msg)
 
-Thrown when a Borel-plane singularity is required but none could be detected —
+Thrown when a Borel-plane singularity is required but none could be detected -
 e.g. [`conformal_borel`](@ref) or [`subtract_singularity`](@ref) on a series whose
 Padé approximant has no poles. Pass the singularity position explicitly.
 """
@@ -72,7 +72,7 @@ Base.showerror(io::IO, e::NoSingularityFound) =
     PoleOnRay(pole, theta)
 
 Thrown by Laplace summation when a Borel-plane pole lies (within tolerance) on the
-integration ray at angle `theta` — a Stokes ray. Use [`lateral_sum`](@ref) with
+integration ray at angle `theta` - a Stokes ray. Use [`lateral_sum`](@ref) with
 `side = :plus` or `:minus` to integrate around it.
 """
 struct PoleOnRay <: ResurgenceError
@@ -85,3 +85,18 @@ function Base.showerror(io::IO, e::PoleOnRay)
           "θ = $(e.theta) (a Stokes ray); use `lateral_sum(B, ħ; side=:plus)` or ",
           "`side=:minus` to integrate around it")
 end
+
+"""
+    TransseriesSolveError(msg)
+
+Thrown by [`transseries_solve`](@ref) and the Painlevé I layer when a transseries ODE
+cannot be solved as posed: an action that fails the ODE's leading-balance equation, a
+resonant sector whose kernel was not supplied (`lattice = …`), or a required mixed-charge
+Stokes datum the model must provide.
+"""
+struct TransseriesSolveError <: ResurgenceError
+    msg::String
+end
+
+Base.showerror(io::IO, e::TransseriesSolveError) =
+    print(io, "TransseriesSolveError: ", e.msg)
