@@ -146,16 +146,6 @@ the Voros series of one-dimensional Schrödinger problems, and connects them to
 [ClusterAlgebras.jl](https://github.com/benedikt-nagler/ClusterAlgebras.jl) through the
 Iwaki–Nakanishi dictionary. Resurgence.jl itself has no dependency on either.
 
-## References
-
-- F. J. Dyson, *Divergence of perturbation theory in quantum electrodynamics*, Phys. Rev. **85** (1952), 631–632.
-- C. M. Bender, T. T. Wu, *Anharmonic oscillator*, Phys. Rev. **184** (1969), 1231–1260.
-- J. Écalle, *Les fonctions résurgentes* I–III, Publ. Math. d'Orsay (1981–1985).
-- A. Voros, *The return of the quartic oscillator: the complex WKB method*, Ann. Inst. H. Poincaré A **39** (1983), 211–338.
-- M. V. Berry, C. J. Howls, *Hyperasymptotics for integrals with saddles*, Proc. R. Soc. Lond. A **434** (1991), 657–675.
-- I. Aniceto, G. Başar, R. Schiappa, *A primer on resurgent transseries and their asymptotics*, Phys. Rept. **809** (2019), 1–135.
-- D. Dorigoni, *An introduction to resurgence, trans-series and alien calculus*, Ann. Phys. **409** (2019), 167914.
-
 ## License
 
 MIT
