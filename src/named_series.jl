@@ -33,6 +33,15 @@ Named course-canon series with `n` exact rational coefficients:
   ``a_n \\sim (-16)^n\\,Γ(n+\\tfrac12)/\\sqrt{π}``; Borel singularity at
   ``ζ = -1/16``, the action of the nontrivial saddle of ``x^2/2 + g x^4``.
 - `:exp` — the exponential ``\\sum_{k≥0} ħ^k / k!`` (convergent sanity example).
+- `:painleve1` — the perturbative (0-instanton) series of Painlevé I in the
+  Garoufalidis–Its–Kapaev–Mariño normalization ``-\\tfrac16 u'' + u^2 = z``
+  (arXiv:1002.3634, eq. 1.2): ``u_0(z) = \\sqrt{z}\\,\\sum_{n≥0} a_n z^{-5n/2}`` with
+  ``a_0 = 1`` and the exact rational recursion (eq. 2.1)
+  ``a_{n+1} = \\tfrac{25n^2-1}{48}\\,a_n - \\tfrac12 \\sum_{m=1}^{n} a_m a_{n+1-m}``,
+  giving ``a_1 = -1/48``, ``a_2 = -49/4608``, …. This returns the bare fluctuation
+  ``\\sum_n a_n x^n`` (``x = z^{-5/2}``, power offset 0); the ``\\sqrt{z}`` prefactor and
+  the transmonomial ``e^{-kA z^{5/4}}`` (action ``A = 8\\sqrt3/5``) are supplied by
+  [`painleve1`](@ref). Its Borel singularities sit at the instanton actions ``±A``.
 """
 function FormalSeries(name::Symbol, n::Integer; var::Symbol = :ħ)
     n ≥ 1 || throw(InvalidArgument("need n ≥ 1 coefficients, got $n"))
@@ -71,10 +80,27 @@ function FormalSeries(name::Symbol, n::Integer; var::Symbol = :ħ)
             c[k + 1] = c[k] // k
         end
         FormalSeries(c, var)
+    elseif name === :painleve1
+        FormalSeries(_painleve1(n), var)
     else
-        throw(InvalidArgument("unknown named series :$name " *
-                              "(expected :euler, :airy, :airy_bi, :quartic, :phi4, or :exp)"))
+        throw(InvalidArgument("unknown named series :$name (expected :euler, :airy, " *
+                              ":airy_bi, :quartic, :phi4, :exp, or :painleve1)"))
     end
+end
+
+# Painlevé I perturbative recursion for −c·u″ + u² = z, u₀ = √z Σ aₙ z^{−5n/2}: matching
+# powers gives, for k ≥ 1,
+#   aₖ = (c/8)(25k² − 50k + 24) a_{k−1} − (1/2) Σ_{i=1}^{k−1} aᵢ a_{k−i},   a₀ = 1.
+# At c = 1/6 (GIKM) this is a_{n+1} = ((25n²−1)/48)aₙ − ½Σ, so a₁ = −1/48, a₂ = −49/4608;
+# at c = 1/12 (:string) a₁ = −1/96. Every aₙ is an exact rational.
+function _painleve1(n::Integer, c::Rational{Int} = 1 // 6)
+    a = Vector{Rational{BigInt}}(undef, n)
+    a[1] = 1
+    for k in 1:(n - 1)                       # fill a_k = a[k+1]
+        conv = sum((a[i + 1] * a[k - i + 1] for i in 1:(k - 1)); init = zero(Rational{BigInt}))
+        a[k + 1] = (c / 8) * (25 * k^2 - 50 * k + 24) * a[k] - conv // 2
+    end
+    a
 end
 
 # Bender–Wu recursion for H = p²/2 + x²/2 + g x⁴, ground state E₀(g) = Σ_m E_m g^m.

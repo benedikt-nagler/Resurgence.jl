@@ -13,7 +13,7 @@ using QuadGK: quadgk
 using PrecompileTools: @setup_workload, @compile_workload
 
 export ResurgenceError, InvalidArgument, IncompatibleSeries, DegeneratePade, PoleOnRay
-export NoSingularityFound
+export NoSingularityFound, TransseriesSolveError
 export AbstractSeries, FormalSeries, BorelSeries, PadeApproximant
 export AbstractBorelApproximant
 export n_terms, coefficients, variable, power_offset, is_exact, evaluate
@@ -30,6 +30,7 @@ export MultiTransseries, actions, n_actions, sector_indices, weight, is_resonant
 export pointed_alien_derivative
 export LogSeries, log_degree, log_blocks, log_block, derivative
 export resonance_lattice, resonance_depth, resonant_solve, charges
+export transseries_solve, painleve1, painleve1_action, painleve1_action_squared
 export plot_borel_plane, plot_large_order, plot_optimal_truncation
 export aaa_approximant, aaa_borel
 
@@ -40,6 +41,8 @@ include("transseries.jl")
 include("multi_transseries.jl")
 include("resonance.jl")
 include("named_series.jl")
+include("ode.jl")
+include("painleve.jl")
 include("borel.jl")
 include("pade.jl")
 include("laplace.jl")
@@ -158,6 +161,8 @@ end
         resonance_lattice((1 // 1, -1 // 1))
         rt = MultiTransseries((1 // 1, -1 // 1), Dict((1, 0) => L, (0, 0) => L))
         sprint(show, rt)
+        FormalSeries(:painleve1, 6)
+        painleve1(3; sectors = 2)
     end
 end
 

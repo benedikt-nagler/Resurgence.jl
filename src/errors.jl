@@ -85,3 +85,18 @@ function Base.showerror(io::IO, e::PoleOnRay)
           "θ = $(e.theta) (a Stokes ray); use `lateral_sum(B, ħ; side=:plus)` or ",
           "`side=:minus` to integrate around it")
 end
+
+"""
+    TransseriesSolveError(msg)
+
+Thrown by [`transseries_solve`](@ref) and the Painlevé I layer when a transseries ODE
+cannot be solved as posed: an action that fails the ODE's leading-balance equation, a
+resonant sector whose kernel was not supplied (`lattice = …`), or a required mixed-charge
+Stokes datum the model must provide.
+"""
+struct TransseriesSolveError <: ResurgenceError
+    msg::String
+end
+
+Base.showerror(io::IO, e::TransseriesSolveError) =
+    print(io, "TransseriesSolveError: ", e.msg)
