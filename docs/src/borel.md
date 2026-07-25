@@ -18,7 +18,8 @@ Pages = ["borel.jl"]
 ## Padé approximants
 
 Padé over any field, with pole and residue extraction. [`borel_pade_poles`](@ref) locates the
-Borel singularities of a series, which is the practical route to the instanton actions.
+Borel singularities of a series — the practical route from coefficients to the actions ``A``
+(instanton actions, in the physics vocabulary).
 
 ```@autodocs
 Modules = [Resurgence]

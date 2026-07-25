@@ -16,7 +16,9 @@ Pages = ["laplace.jl"]
 
 ## Sequence acceleration
 
-[`accelerate`](@ref) offers Shanks, Wynn-ε, Levin-u/t and Richardson.
+[`accelerate`](@ref) offers Shanks, Wynn-ε, Levin-u/t and Richardson. These act on any
+sequence, not only on a Borel pipeline — [`partial_sums`](@ref) turns a series into one — so
+they are usable on their own as convergence accelerators.
 
 ```@autodocs
 Modules = [Resurgence]

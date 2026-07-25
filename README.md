@@ -5,47 +5,64 @@
 [![CI](https://github.com/benedikt-nagler/Resurgence.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/benedikt-nagler/Resurgence.jl/actions/workflows/CI.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Resurgence in Julia: Borel transforms, Padé approximants, Borel–Padé–Laplace summation,
-large-order analysis, transseries and alien calculus.
+Resurgence in Julia — divergent and asymptotic series made usable: Borel transforms, Padé
+approximants, Borel–Padé–Laplace summation, sequence acceleration, large-order analysis,
+transseries and alien calculus.
 
-Perturbative expansions in quantum mechanics and quantum field theory usually have zero
-radius of convergence. The coefficients grow factorially, so the series is not a function —
-but it still determines one. [Resurgence
-theory](https://en.wikipedia.org/wiki/Resurgent_function), due to Écalle, recovers it through
-the **Borel transform**. For $\Phi(\hbar) = \sum_n a_n \hbar^{n+\beta}$,
+A series whose coefficients grow factorially has zero radius of convergence, so it is not a
+function — but it still determines one, and it carries more information than a convergent
+series would. Such expansions are the normal output of any problem where a small parameter
+enters singularly: singular perturbation and boundary-layer problems, semiclassical and WKB
+expansions, nonlinear ODEs near an irregular singular point (Painlevé and friends), the
+coefficient asymptotics of generating functions, saddle-point expansions of integrals, and
+perturbation theory in quantum mechanics and quantum field theory.
+
+[Resurgence](https://en.wikipedia.org/wiki/Resurgent_function) is the theory that makes such
+a series usable — Écalle's framework, and the one this package implements. Its basic tool is
+the **Borel transform**: for $\Phi(\hbar) = \sum_n a_n \hbar^{n+\beta}$,
 
 $$\hat{B}(\zeta) = \sum_{n} \frac{a_n}{\Gamma(n+\beta)}\, \zeta^{\,n+\beta-1}$$
 
 converges on a disk, and the Laplace integral $\int_0^\infty e^{-\zeta/\hbar}\hat{B}(\zeta)\,d\zeta$
-resums the original series.
+resums the original series to an actual number.
 
-The point of the construction is what sits in the Borel plane. The singularities of $\hat B$
-are at the instanton actions $A$ of the problem: they fix the growth
-$a_n \sim S\,\Gamma(n+b)/A^n$ of the coefficients, and they correspond to the exponentially
-small effects $e^{-A/\hbar}$ that the perturbative series cannot see. When a singularity lies
-on the integration ray, the two lateral sums differ by such a term — the **Stokes
-phenomenon**. So the divergence of the series is not a defect; it encodes the nonperturbative
-content.
+What makes this more than a summation trick is the geometry of the Borel plane. Each
+singularity of $\hat B$ sits at some $A$, and that one location does three things at once: it
+fixes the growth $a_n \sim S\,\Gamma(n+b)/A^n$ of the coefficients, it marks an exponentially
+small scale $e^{-A/\hbar}$ that no order of the series can see, and — when it lies on the
+integration ray — it makes the two lateral sums differ by exactly such a term, the **Stokes
+phenomenon**. Divergence is therefore diagnostic: the growth rate of coefficients you already
+have tells you about behaviour beyond all orders. (In a physics problem the $A$ are instanton
+actions; in an ODE they are the exponents of the subdominant solutions; in coefficient
+asymptotics they are the dominant singularities. The machinery does not care which.)
 
-These structures turn up in anharmonic oscillators and double wells, in exact WKB and
-spectral problems, and in matrix models and topological strings. The notebook [resurgence in
-perturbation theory](examples/divergent_perturbation_theory.ipynb) walks through the toolbox
-on the Euler, quartic-oscillator and Airy series.
+Two things you can do with a list of coefficients:
+
+- **get a number** — `borel_sum` / `median_sum` for a resummed value, `accelerate` for
+  sequence acceleration (Shanks, Wynn-ε, Levin, Richardson), `hyper_sum` when optimal
+  truncation is not accurate enough;
+- **get structure** — `large_order_fit` and `borel_pade_poles` recover the singularity
+  locations, exponents and Stokes constants from the coefficients alone.
+
+The notebook [resurgence in perturbation theory](examples/divergent_perturbation_theory.ipynb)
+walks through the toolbox on the Euler, quartic-oscillator and Airy series.
 
 Series with exact coefficients stay exact — `Rational` input runs through the whole pipeline
 and precision follows the caller's argument type, so the same code runs in `Float64` or in
 `BigFloat` at whatever `setprecision` is active.
 
 **Scope.** This is an analysis engine for asymptotic series *however you produced them* — by
-hand, from a recursion, from your own field-theory or string computation, or read in from a
-file. It is not a coefficient generator for any particular model: the handful of built-in
+hand, from a recursion, from a symbolic computation, or read in from a file. It is not a
+coefficient generator for any particular model: the handful of built-in
 `FormalSeries(:name, n)` recursions exist as test oracles and worked examples, not as a
-library of physical expansions.
+library of expansions.
 
 ## Installation
 
+Not yet registered in General. From the Julia REPL:
+
 ```julia
-pkg> add Resurgence
+pkg> add https://github.com/benedikt-nagler/Resurgence.jl
 ```
 
 Requires Julia 1.10 or later. Full API documentation is at
@@ -91,8 +108,8 @@ which is what resonant problems produce.
 **Borel machinery.** Exact `borel` and `inverse_borel` in rising-factorial normalization.
 
 **Padé approximants.** Over any field, with pole and residue extraction. `borel_pade_poles`
-locates the Borel singularities of a series, which is the practical route to the instanton
-actions.
+locates the Borel singularities of a series — the practical route from coefficients to the
+actions $A$. AAA rational approximation is available as an alternative through an extension.
 
 **Summation.** `borel_sum` and `laplace_sum` for Borel–Padé–Laplace sums, `lateral_sum` on
 tilted rays, `stokes_discontinuity` for the jump across a Stokes line, and `median_sum` for
@@ -100,12 +117,15 @@ the real average. A guard detects poles sitting on the integration ray instead o
 returning nonsense.
 
 **Acceleration and conformal maps.** `accelerate` offers Shanks, Wynn-ε, Levin-u/t and
-Richardson; `conformal_borel` maps the Borel plane for series whose singularities form a cut
-rather than isolated poles, where Padé struggles.
+Richardson on any sequence (`partial_sums` turns a series into one), useful on its own as a
+convergence accelerator; `conformal_borel` maps the Borel plane for series whose
+singularities form a cut rather than isolated poles, where Padé struggles.
 
 **Large-order analysis.** `large_order_fit` recovers $(A, b, S)$ from
 $a_n \sim S\,\Gamma(n+b)/A^n$, including multi-saddle fits with complex-conjugate action
-pairs. `subtract_singularity` peels off a known singularity to expose the subleading one.
+pairs — the numerical-analysis side of Darboux/singularity analysis, run directly on the
+coefficients. `subtract_singularity` peels off a known singularity to expose the subleading
+one.
 
 **Hyperasymptotics.** Optimal truncation, Dingle terminants, and level-one Berry–Howls
 hyperasymptotic summation (`optimal_truncation`, `dingle_terminant`, `hyper_sum`).
@@ -131,6 +151,10 @@ it to Painlevé I, with both normalization conventions of the instanton action a
 (Bender–Wu ground-state energy), `:phi4`, `:exp`, `:painleve1`, all from exact recursions.
 They double as test oracles — the suite checks mathematical identities rather than stored
 numbers.
+
+**Numerical hygiene.** Every operation returns a new object, invalid input throws a typed
+error (`PoleOnRay`, `DegeneratePade`, …) rather than a silently wrong number, and precision
+is taken from the argument type rather than a global setting.
 
 ## Extensions
 
@@ -161,10 +185,15 @@ import AbstractAlgebra as AA
 
 ## Related packages
 
-[ExactWKB.jl](https://github.com/benedikt-nagler/ExactWKB.jl) uses this package to Borel sum
-the Voros series of one-dimensional Schrödinger problems, and connects them to
-[ClusterAlgebras.jl](https://github.com/benedikt-nagler/ClusterAlgebras.jl) through the
-Iwaki–Nakanishi dictionary. Resurgence.jl itself has no dependency on either.
+This package is self-contained and depends on nothing below. It is also one foundation of a
+family of Julia packages for **exact and asymptotic methods** — where a discrete, exactly
+computable structure controls a continuous, only-asymptotically-defined one:
+
+- [ClusterAlgebras.jl](https://github.com/benedikt-nagler/ClusterAlgebras.jl) — the discrete
+  side: quivers, seed mutation, exchange graphs, green sequences.
+- [ExactWKB.jl](https://github.com/benedikt-nagler/ExactWKB.jl) — the bridge, which Borel
+  sums the WKB series of a Schrödinger-type ODE with this package and matches the result
+  against cluster combinatorics via the Iwaki–Nakanishi dictionary.
 
 ## License
 
