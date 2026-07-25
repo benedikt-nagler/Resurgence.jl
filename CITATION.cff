@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Resurgence.jl: Borel summation, transseries and alien calculus in Julia"
+abstract: >-
+  A Julia package for the analysis of divergent asymptotic series: exact Borel transforms,
+  Padé and AAA approximation of the Borel function, Borel-Padé-Laplace summation with lateral
+  sums and Stokes discontinuities, large-order analysis, hyperasymptotics, one- and
+  multi-parameter transseries with resonance, and alien calculus.
+type: software
+authors:
+  - given-names: Benedikt
+    family-names: Nagler
+    email: benedikt.nagler@protonmail.com
+license: MIT
+repository-code: "https://github.com/benedikt-nagler/Resurgence.jl"
+url: "https://benedikt-nagler.github.io/Resurgence.jl/stable"
+keywords:
+  - resurgence
+  - Borel summation
+  - transseries
+  - alien calculus
+  - asymptotic analysis
+  - Pade approximants
+  - Julia
+version: 0.1.0
+date-released: "2026-07-25"

@@ -10,6 +10,8 @@ using QuadGK: quadgk
         Aqua.test_all(Resurgence; ambiguities = false)
         Aqua.test_ambiguities(Resurgence)
     end
+    # must precede every test file that loads an extension's trigger package
+    include("test_extension_stubs.jl")
     include("test_errors.jl")
     include("test_formal_series.jl")
     include("test_log_series.jl")

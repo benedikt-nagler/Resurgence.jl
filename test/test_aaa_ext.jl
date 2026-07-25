@@ -1,6 +1,5 @@
 @testset "BaryRational extension" begin
-    # before the extension loads, the stub explains what to do
-    @test_throws ErrorException aaa_borel(borel(FormalSeries(:euler, 9)))
+    # the pre-load stub is asserted in test_extension_stubs.jl, which runs first
     @eval using BaryRational
 
     @testset "Euler: pole hunter and Laplace seam" begin

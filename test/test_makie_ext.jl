@@ -1,8 +1,5 @@
 @testset "makie extension" begin
-    # before the extension loads, the stubs explain what to do
-    @test_throws ErrorException plot_borel_plane(borel(FormalSeries(:euler, 6)))
-    @test_throws ErrorException plot_large_order(FormalSeries(:euler, 6))
-    @test_throws ErrorException plot_optimal_truncation(FormalSeries(:euler, 6), 0.1)
+    # the pre-load stubs are asserted in test_extension_stubs.jl, which runs first
     @eval using CairoMakie
     B = borel(FormalSeries(:euler, 8))
     fig = plot_borel_plane(B; order = 1, rays = [0.0, Float64(π)])

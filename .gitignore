@@ -2,3 +2,12 @@ Manifest.toml
 .DS_Store
 *.cov
 .ipynb_checkpoints/
+docs/build/
+docs/site/
+
+PLANNING/*
+CLAUDE.md
+RECENT_CHANGES.md
+.gitignore
+
+examples/course_companion.ipynb

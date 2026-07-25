@@ -1,5 +1,7 @@
 # Resurgence.jl
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://benedikt-nagler.github.io/Resurgence.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://benedikt-nagler.github.io/Resurgence.jl/dev)
 [![CI](https://github.com/benedikt-nagler/Resurgence.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/benedikt-nagler/Resurgence.jl/actions/workflows/CI.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -34,15 +36,20 @@ Series with exact coefficients stay exact — `Rational` input runs through the 
 and precision follows the caller's argument type, so the same code runs in `Float64` or in
 `BigFloat` at whatever `setprecision` is active.
 
+**Scope.** This is an analysis engine for asymptotic series *however you produced them* — by
+hand, from a recursion, from your own field-theory or string computation, or read in from a
+file. It is not a coefficient generator for any particular model: the handful of built-in
+`FormalSeries(:name, n)` recursions exist as test oracles and worked examples, not as a
+library of physical expansions.
+
 ## Installation
 
-Not yet registered in General. From the Julia REPL:
-
 ```julia
-pkg> add https://github.com/benedikt-nagler/Resurgence.jl
+pkg> add Resurgence
 ```
 
-Requires Julia 1.10 or later.
+Requires Julia 1.10 or later. Full API documentation is at
+[benedikt-nagler.github.io/Resurgence.jl](https://benedikt-nagler.github.io/Resurgence.jl/stable).
 
 ## Quick start
 
@@ -127,7 +134,8 @@ numbers.
 
 ## Extensions
 
-The core depends only on QuadGK; the rest is loaded on demand.
+The core depends only on QuadGK, PrecompileTools and the LinearAlgebra stdlib; the rest is
+loaded on demand.
 
 ```julia
 using CairoMakie                   # or GLMakie
@@ -137,6 +145,18 @@ plot_optimal_truncation(Φ, 0.1)
 
 using BaryRational
 aaa_borel(borel(Φ))                # AAA rational approximation of the Borel function
+```
+
+## A note on name collisions
+
+Three exports — `coefficients`, `derivative`, `evaluate` — are also exported by
+AbstractAlgebra.jl and by several other computer-algebra packages. They are the right names
+for what they do, so they are kept; if you load both packages into one namespace, import
+explicitly rather than relying on `using`:
+
+```julia
+using Resurgence: FormalSeries, borel, coefficients
+import AbstractAlgebra as AA
 ```
 
 ## Related packages
