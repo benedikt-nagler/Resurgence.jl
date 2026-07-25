@@ -1,6 +1,5 @@
 @testset "BaryRational extension" begin
-    # before the extension loads, the stub explains what to do
-    @test_throws ErrorException aaa_borel(borel(FormalSeries(:euler, 9)))
+    # the pre-load stub is asserted in test_extension_stubs.jl, which runs first
     @eval using BaryRational
 
     @testset "Euler: pole hunter and Laplace seam" begin
@@ -8,7 +7,7 @@
         B = borel(Φ)
         a = aaa_borel(B)
         @test a isa AbstractBorelApproximant
-        # AAA runs in Float64 — a pole/branch-cut hunter, accurate to ~1e-7, not a
+        # AAA runs in Float64 - a pole/branch-cut hunter, accurate to ~1e-7, not a
         # high-precision summation tool (that is Padé/BigFloat's job). It emits
         # several spurious (Froissart) poles too, so locate the physical one at −1.
         pol = poles(a)
