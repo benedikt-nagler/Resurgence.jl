@@ -61,10 +61,10 @@ as a library of expansions.
 
 ## Installation
 
-Not yet registered in General. From the Julia REPL:
+From the Julia REPL:
 
 ```julia
-pkg> add https://github.com/benedikt-nagler/Resurgence.jl
+pkg> add Resurgence
 ```
 
 Requires Julia 1.10 or later.
