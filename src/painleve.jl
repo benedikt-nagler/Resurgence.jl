@@ -1,10 +1,14 @@
 # Painlevé I as the canonical nonlinear-ODE oracle for the sector-recursion solver
-# (`ode.jl`). Two normalizations of the same equation, both first-class:
+# (`ode.jl`).
+#
+# Convention ledger - two normalizations of the same equation, both first-class (the
+# actions are pinned by `test_painleve.jl`, NOT copied from the roadmap, which had
+# A = 8√6/5 against the :gikm equation):
 #
 #   :gikm   −(1/6) u″ + u² = z         action A = 8√3/5   (A² = 192/25)
 #   :string −(1/12) u″ + u² = z        action A = 8√6/5   (A² = 384/25)
 #
-# GIKM (Garoufalidis–Its–Kapaev–Mariño, arXiv:1002.3634) is the oracle spine: it has the
+# [GIKM] (Garoufalidis–Its–Kapaev–Mariño, arXiv:1002.3634) is the oracle spine: it has the
 # exactly-rational perturbative recursion (`FormalSeries(:painleve1, n)`) and a documented
 # exact Stokes constant S₁ = −i·3^{1/4}/(2√π). :string is the (2,3) minimal-string /
 # matrix-model normalization; for −c·u″ + u² = z the action is A = (4/5)√(2/c).
