@@ -22,6 +22,7 @@ makedocs(;
             "Large-order analysis" => "large_order.md",
             "Transseries" => "transseries.md",
             "Alien calculus" => "alien.md",
+            "Topological strings" => "topological_string.md",
             "Plotting" => "plotting.md",
         ],
         "Errors" => "errors.md",

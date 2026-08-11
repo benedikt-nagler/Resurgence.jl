@@ -28,6 +28,7 @@ using QuadGK: quadgk
     include("test_multi_transseries.jl")
     include("test_resonance.jl")
     include("test_painleve.jl")
+    include("test_topological_string.jl")
     include("test_alien.jl")
     include("test_multi_alien.jl")
     include("test_show.jl")

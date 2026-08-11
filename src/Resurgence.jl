@@ -31,6 +31,8 @@ export pointed_alien_derivative
 export LogSeries, log_degree, log_blocks, log_block, derivative
 export resonance_lattice, resonance_depth, resonant_solve, charges
 export transseries_solve, painleve1, painleve1_action, painleve1_action_squared
+export conifold_gap_series, conifold_gap_borel, conifold_gap_actions
+export conifold_gap_stokes_data, resolved_conifold_series, resolved_conifold_actions
 export plot_borel_plane, plot_large_order, plot_optimal_truncation
 export aaa_approximant, aaa_borel
 
@@ -43,6 +45,7 @@ include("resonance.jl")
 include("named_series.jl")
 include("ode.jl")
 include("painleve.jl")
+include("topological_string.jl")
 include("borel.jl")
 include("pade.jl")
 include("laplace.jl")
