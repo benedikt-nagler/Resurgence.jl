@@ -34,6 +34,7 @@ export transseries_solve, painleve1, painleve1_action, painleve1_action_squared
 export conifold_gap_series, conifold_gap_borel, conifold_gap_actions
 export conifold_gap_stokes_data, resolved_conifold_series, resolved_conifold_actions
 export plot_borel_plane, plot_large_order, plot_optimal_truncation
+export plot_borel_plane!, plot_large_order!, plot_optimal_truncation!
 export aaa_approximant, aaa_borel
 
 include("errors.jl")
@@ -111,6 +112,36 @@ function plot_optimal_truncation(args...; kwargs...)
         throw(MethodError(plot_optimal_truncation, args))
     end
 end
+
+"""
+    plot_borel_plane!([target], args...; kwargs...)
+
+Mutating form of [`plot_borel_plane`](@ref): draw into an existing `Axis` (or the
+current one) instead of building a new figure. `target` may be an `Axis` or a
+layout slot such as `fig[1, 2]`. Implemented in the Makie package extension -
+load a backend (`using CairoMakie`) first.
+"""
+plot_borel_plane!(args...; kwargs...) =
+    error("plot_borel_plane! requires a Makie backend: run `using CairoMakie` " *
+          "(or GLMakie) and retry")
+
+"""
+    plot_large_order!([target], Φ; kwargs...)
+
+Mutating form of [`plot_large_order`](@ref). See [`plot_borel_plane!`](@ref).
+"""
+plot_large_order!(args...; kwargs...) =
+    error("plot_large_order! requires a Makie backend: run `using CairoMakie` " *
+          "(or GLMakie) and retry")
+
+"""
+    plot_optimal_truncation!([target], Φ, ħ; kwargs...)
+
+Mutating form of [`plot_optimal_truncation`](@ref). See [`plot_borel_plane!`](@ref).
+"""
+plot_optimal_truncation!(args...; kwargs...) =
+    error("plot_optimal_truncation! requires a Makie backend: run " *
+          "`using CairoMakie` (or GLMakie) and retry")
 
 """
     aaa_approximant(zs, fs; tol = 1e-13, mmax = 100, var = :ζ) -> AAAApproximant

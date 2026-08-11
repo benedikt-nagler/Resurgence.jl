@@ -10,6 +10,9 @@
     @test_throws ErrorException plot_borel_plane(borel(Φ))
     @test_throws ErrorException plot_large_order(Φ)
     @test_throws ErrorException plot_optimal_truncation(Φ, 0.1)
+    @test_throws ErrorException plot_borel_plane!(borel(Φ))
+    @test_throws ErrorException plot_large_order!(Φ)
+    @test_throws ErrorException plot_optimal_truncation!(Φ, 0.1)
 
     # BaryRational extension
     @test_throws ErrorException aaa_borel(borel(Φ))

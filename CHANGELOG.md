@@ -4,6 +4,32 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-10
+
+The plotting API becomes Makie recipes. **Breaking** for anyone who uses the return value
+of a `plot_*` call.
+
+### Changed
+
+- **Breaking.** `plot_borel_plane`, `plot_large_order` and `plot_optimal_truncation` are
+  now Makie recipes rather than functions that build a `Figure`. A plain call returns a
+  `Makie.FigureAxisPlot` instead of a `Makie.Figure`; code that captured the result and
+  passed it to `save` still works, code that annotated it as a `Figure` does not. To
+  recover the figure, use `fap.figure`.
+- A recipe draws into a parent axis it does not own, so the plots **no longer add their own
+  legend**. Series are still labelled; call `axislegend(ax)` for the legend. This is most
+  noticeable on the multi-approximant overlay `plot_borel_plane([r1, r2])`.
+- Axis labels, title and the logarithmic `y`-scale now arrive as preferred axis attributes,
+  which a caller can override with `axis = (; xlabel = "…")`.
+
+### Added
+
+- `plot_borel_plane!`, `plot_large_order!` and `plot_optimal_truncation!`: draw into an
+  existing `Axis` instead of building a figure.
+- Every `plot_*` accepts a layout slot as its first argument, so
+  `plot_borel_plane(fig[1, 2], r)` places the plot in a caller's own figure. This, and the
+  `!` forms, are what make the three plots composable into one multi-panel figure.
+
 ## [0.1.1] - 2026-07-28
 
 Documentation-only release. No changes to the public API.
