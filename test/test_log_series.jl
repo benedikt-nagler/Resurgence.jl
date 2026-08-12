@@ -17,6 +17,11 @@
         @test log_block(L, 1) == one1
         @test log_block(L, 7) == zero1                  # absent ⇒ zero, as Φ[n]
         @test_throws InvalidArgument log_block(L, -1)
+        # an absent block inherits block 0's power offset, so it stays addable on a
+        # fractional power grid (where an offset-0 zero would not align)
+        Lh = LogSeries([fs([1 // 1]; power_offset = 1 // 2)])
+        @test log_block(Lh, 3).power_offset == 1 // 2
+        @test log_block(Lh, 3) + log_block(Lh, 0) == log_block(Lh, 0)
         @test n_terms(L) == 3                           # the longest block
         # trailing zero blocks are dropped, so log_degree is exact
         @test log_degree(LogSeries([Φ, zero1, zero1])) == 0

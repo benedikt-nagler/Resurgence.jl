@@ -103,7 +103,11 @@ the zero series, mirroring `Φ[n]` on [`FormalSeries`](@ref).
 """
 function log_block(L::LogSeries, p::Integer)
     p < 0 && throw(InvalidArgument("log-block index must be ≥ 0, got $p"))
-    p ≤ log_degree(L) ? L.blocks[p + 1] : _zero_like(L.blocks[1])
+    p ≤ log_degree(L) && return L.blocks[p + 1]
+    # An absent block inherits block 0's power offset, not 0: on a fractional power grid
+    # an offset-0 zero cannot be added to a real block (offsets must differ by an integer).
+    FormalSeries([zero(L.blocks[1].coeffs[1])], L.var;
+                 power_offset = L.blocks[1].power_offset)
 end
 
 _zero_like(Φ::FormalSeries) = FormalSeries([zero(Φ.coeffs[1])], Φ.var)
