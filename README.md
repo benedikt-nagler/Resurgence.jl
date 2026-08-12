@@ -6,44 +6,33 @@
 [![CI](https://github.com/benedikt-nagler/Resurgence.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/benedikt-nagler/Resurgence.jl/actions/workflows/CI.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Resurgence in Julia - divergent and asymptotic series made usable: Borel transforms, Padé
-approximants, Borel–Padé–Laplace summation, sequence acceleration, large-order analysis,
-transseries and alien calculus.
+Divergent and asymptotic series in Julia: Borel transforms, Padé approximants,
+Borel–Padé–Laplace summation, large-order analysis, transseries and alien calculus.
 
-A series whose coefficients grow factorially has zero radius of convergence, so it is not a
-function - but it still determines one.
-[Resurgence](https://en.wikipedia.org/wiki/Resurgent_function) is Écalle's theory of how, and
-its basic tool is the **Borel transform**: for $\Phi(\hbar) = \sum_n a_n \hbar^{n+\beta}$,
+A series with factorially growing coefficients has zero radius of convergence, but it still
+determines a function. The Borel transform of $\Phi(\hbar) = \sum_n a_n \hbar^{n+\beta}$,
 
-$$\hat{B}(\zeta) = \sum_{n} \frac{a_n}{\Gamma(n+\beta)}\, \zeta^{\,n+\beta-1}$$
+$$\hat{B}(\zeta) = \sum_{n} \frac{a_n}{\Gamma(n+\beta)}\, \zeta^{\,n+\beta-1},$$
 
-converges on a disk, and the Laplace integral
-$\int_0^\infty e^{-\zeta/\hbar}\hat{B}(\zeta)\,d\zeta$ resums the original series to a number.
-Each singularity of $\hat B$ at some $A$ then fixes the coefficient growth
-$a_n \sim S\,\Gamma(n+b)/A^n$, marks an exponentially small scale $e^{-A/\hbar}$ invisible to
-every order of the series, and - on the integration ray - produces the **Stokes phenomenon**.
-Divergence is diagnostic: the coefficients you already have tell you about behaviour beyond
-all orders.
+converges on a disk, and the Laplace integral $\int_0^\infty e^{-\zeta/\hbar}\hat{B}\,d\zeta$
+resums the series to a number. Each singularity of $\hat B$ at $A$ fixes the coefficient
+growth $a_n \sim S\,\Gamma(n+b)/A^n$ and marks a scale $e^{-A/\hbar}$ that no order of the
+series can see.
 
-So from a list of coefficients you can **get a number** (`borel_sum`, `median_sum`,
-`accelerate`, `hyper_sum`) or **get structure** (`large_order_fit`, `borel_pade_poles` recover
-actions, exponents and Stokes constants). Exact input stays exact - `Rational` runs through
-the whole pipeline, and precision follows the caller's argument type.
+Given a list of coefficients you can get a number (`borel_sum`, `median_sum`, `accelerate`,
+`hyper_sum`) or get structure (`large_order_fit`, `borel_pade_poles`). `Rational` input runs
+through the whole pipeline exactly, and precision follows the caller's argument type.
 
-**Scope.** An analysis engine for asymptotic series *however you produced them*, not a
-coefficient generator: the built-in `FormalSeries(:name, n)` recursions are test oracles and
-worked examples, not a library of expansions.
+This is an analysis engine for series you produced elsewhere, not a coefficient generator.
+The built-in `FormalSeries(:name, n)` recursions are test oracles and worked examples.
 
 ## Installation
-
-From the Julia REPL:
 
 ```julia
 pkg> add Resurgence
 ```
 
-Requires Julia 1.10 or later. Full API documentation is at
-[benedikt-nagler.github.io/Resurgence.jl](https://benedikt-nagler.github.io/Resurgence.jl/stable).
+Requires Julia 1.10 or later.
 
 ## Quick start
 
@@ -76,63 +65,43 @@ F = Transseries(:euler, 20)
 alien_derivative(F; stokes = -2π * im)
 ```
 
-The notebook [resurgence in perturbation theory](examples/divergent_perturbation_theory.ipynb)
-walks through the toolbox on the Euler, quartic-oscillator and Airy series.
+## Features
 
-## Functionality
-
-**Formal series.** `FormalSeries` over any coefficient type, with arithmetic, truncation,
-differentiation and fractional power offsets; `LogSeries` adds a polynomial in $\log\hbar$ for
-resonant problems.
-
-**Borel machinery.** Exact `borel` and `inverse_borel` in rising-factorial normalization.
-
-**Padé approximants.** Over any field, with pole and residue extraction. `borel_pade_poles`
-locates the Borel singularities - the practical route from coefficients to the actions $A$.
-AAA rational approximation is available as an alternative through an extension.
-
-**Summation.** `borel_sum` and `laplace_sum`, `lateral_sum` on tilted rays,
-`stokes_discontinuity` for the jump across a Stokes line, `median_sum` for the real average. A
-guard catches poles sitting on the integration ray instead of returning nonsense.
-
-**Acceleration and conformal maps.** `accelerate` (Shanks, Wynn-ε, Levin-u/t, Richardson) on
-any sequence, useful on its own; `conformal_borel` for series whose singularities form a cut
-rather than isolated poles, where Padé struggles.
-
-**Large-order analysis.** `large_order_fit` recovers $(A, b, S)$ from
-$a_n \sim S\,\Gamma(n+b)/A^n$, including multi-saddle fits with complex-conjugate action
-pairs; `subtract_singularity` peels off a known singularity to expose the subleading one.
-
-**Hyperasymptotics.** Optimal truncation, Dingle terminants, and level-one Berry–Howls
-hyperasymptotic summation (`optimal_truncation`, `dingle_terminant`, `hyper_sum`).
-
-**Transseries.** One-parameter `Transseries` $\sum_n \sigma^n e^{-nA/\hbar}\Phi_n$, and
-`MultiTransseries` for several actions at once, stored sparsely over the action lattice.
-
-**Alien calculus.** `alien_derivative` via the bridge equation (by lattice charge or by
-singularity location), `stokes_automorphism` as both a $\sigma$-shift and an operator, and
-`stokes_constant` from Borel-plane residues or large-order growth.
-
-**Resonance.** Integer relations among the actions make the transseries develop logarithms;
-`resonance_lattice` computes them exactly over $\mathbb{Z}$ and `resonant_solve` generates the
-log tower.
-
-**ODEs and Painlevé.** `transseries_solve` builds a transseries solution sector by sector from
-a user-supplied linear solve; `painleve1` applies it to Painlevé I, in either normalization
-convention for the instanton action.
-
-**Named examples.** `:euler`, `:airy`, `:airy_bi`, `:quartic` (Bender–Wu), `:phi4`, `:exp`,
-`:painleve1`, all from exact recursions. They double as test oracles - the suite checks
-mathematical identities rather than stored numbers.
-
-**Numerical hygiene.** Every operation returns a new object, invalid input throws a typed
-error (`PoleOnRay`, `DegeneratePade`, …) rather than a silently wrong number, and precision
-comes from the argument type rather than a global setting.
+- **Formal series.** `FormalSeries` over any coefficient type, with arithmetic, truncation,
+  differentiation and fractional power offsets. `LogSeries` adds a polynomial in
+  $\log\hbar$ for resonant problems.
+- **Borel machinery.** Exact `borel` and `inverse_borel` in rising-factorial normalization.
+- **Padé approximants.** Over any field, with pole and residue extraction.
+  `borel_pade_poles` locates the Borel singularities. AAA rational approximation is
+  available through an extension.
+- **Summation.** `borel_sum`, `laplace_sum`, `lateral_sum` on tilted rays,
+  `stokes_discontinuity`, `median_sum`. A guard catches poles on the integration ray.
+- **Acceleration and conformal maps.** `accelerate` (Shanks, Wynn-ε, Levin-u/t, Richardson)
+  works on any sequence. `conformal_borel` handles a cut instead of isolated poles.
+- **Large-order analysis.** `large_order_fit` recovers $(A, b, S)$, including multi-saddle
+  fits with complex-conjugate action pairs. `subtract_singularity` exposes the subleading
+  singularity.
+- **Hyperasymptotics.** `optimal_truncation`, `dingle_terminant`, and level-one Berry–Howls
+  summation in `hyper_sum`.
+- **Transseries.** One-parameter `Transseries` $\sum_n \sigma^n e^{-nA/\hbar}\Phi_n$, and
+  `MultiTransseries` for several actions, stored sparsely over the action lattice.
+- **Alien calculus.** `alien_derivative` via the bridge equation, `stokes_automorphism` as
+  both a $\sigma$-shift and an operator, and `stokes_constant` from Borel residues or
+  large-order growth.
+- **Resonance.** `resonance_lattice` computes integer relations among the actions exactly
+  over $\mathbb{Z}$, and `resonant_solve` generates the log tower.
+- **ODEs and Painlevé.** `transseries_solve` builds a solution sector by sector from a
+  user-supplied linear solve, and `multi_transseries_solve` handles several actions and
+  resonant sectors. `painleve1`, `painleve1_two_parameter` and `painleve1_stokes_constant`
+  apply this to Painlevé I.
+- **Named examples.** `:euler`, `:airy`, `:airy_bi`, `:quartic` (Bender–Wu), `:phi4`,
+  `:exp`, `:painleve1`, all from exact recursions.
+- **Typed errors.** Invalid input throws `PoleOnRay`, `DegeneratePade` and friends instead
+  of returning a wrong number.
 
 ## Extensions
 
-The core depends only on QuadGK, PrecompileTools and the LinearAlgebra stdlib; the rest is
-loaded on demand.
+The core depends only on QuadGK, PrecompileTools and LinearAlgebra.
 
 ```julia
 using CairoMakie                   # or GLMakie
@@ -141,32 +110,36 @@ plot_large_order(Φ)
 plot_optimal_truncation(Φ, 0.1)
 
 using BaryRational
-aaa_borel(borel(Φ))                # AAA rational approximation of the Borel function
+aaa_borel(borel(Φ))                # AAA rational approximation
 ```
 
-## A note on name collisions
+## Name collisions
 
-Three exports - `coefficients`, `derivative`, `evaluate` - are also exported by
-AbstractAlgebra.jl and by several other computer-algebra packages. They are the right names
-for what they do, so they are kept; if you load both packages into one namespace, import
-explicitly rather than relying on `using`:
+`coefficients`, `derivative` and `evaluate` are also exported by AbstractAlgebra.jl and
+other computer-algebra packages. If you load both into one namespace, import explicitly:
 
 ```julia
 using Resurgence: FormalSeries, borel, coefficients
 import AbstractAlgebra as AA
 ```
 
+## Documentation
+
+The [documentation](https://benedikt-nagler.github.io/Resurgence.jl/stable) has a manual page
+per layer. The notebook
+[divergent perturbation theory](examples/divergent_perturbation_theory.ipynb) walks through
+the toolbox on the Euler, quartic-oscillator and Airy series.
+
 ## Related packages
 
-This package is self-contained and depends on nothing below. It is also one foundation of a
-family of Julia packages for **exact and asymptotic methods** - where a discrete, exactly
-computable structure controls a continuous, only-asymptotically-defined one:
+This package depends on nothing below it. It is one foundation of a family of Julia packages
+for exact and asymptotic methods:
 
-- [ClusterAlgebras.jl](https://github.com/benedikt-nagler/ClusterAlgebras.jl) - the discrete
-  side: quivers, seed mutation, exchange graphs, green sequences.
-- [ExactWKB.jl](https://github.com/benedikt-nagler/ExactWKB.jl) - the bridge, which Borel
-  sums the WKB series of a Schrödinger-type ODE with this package and matches the result
-  against cluster combinatorics via the Iwaki–Nakanishi dictionary.
+- [ClusterAlgebras.jl](https://github.com/benedikt-nagler/ClusterAlgebras.jl): quivers, seed
+  mutation, exchange graphs, green sequences.
+- [ExactWKB.jl](https://github.com/benedikt-nagler/ExactWKB.jl): Borel sums the WKB series of
+  a Schrödinger-type ODE with this package, and matches the result against cluster
+  combinatorics.
 
 ## License
 

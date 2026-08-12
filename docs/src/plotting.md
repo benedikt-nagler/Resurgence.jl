@@ -5,7 +5,7 @@ CurrentModule = Resurgence
 # Plotting
 
 The core depends only on QuadGK, PrecompileTools and the LinearAlgebra stdlib. Plotting and
-AAA rational approximation live in package extensions, loaded on demand - calling one of these
+AAA rational approximation live in package extensions, loaded on demand. Calling one of these
 before its trigger package is loaded raises an error telling you what to load.
 
 ```julia
@@ -20,16 +20,22 @@ aaa_borel(borel(Φ))                # AAA rational approximation of the Borel fu
 
 ## Makie extension
 
+Each has a mutating form that draws into an existing `Axis` or layout slot instead of building
+a new figure.
+
 ```@docs
 plot_borel_plane
 plot_large_order
 plot_optimal_truncation
+plot_borel_plane!
+plot_large_order!
+plot_optimal_truncation!
 ```
 
 ## BaryRational extension
 
-AAA runs in `Float64` - treat it as a pole and branch-cut hunter, not a high-precision
-summation tool (that is Padé's job, in `BigFloat`).
+AAA runs in `Float64`, so treat it as a pole and branch-cut hunter and not as a
+high-precision summation tool. That is Padé's job, in `BigFloat`.
 
 ```@docs
 aaa_approximant

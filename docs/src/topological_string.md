@@ -5,8 +5,8 @@ CurrentModule = Resurgence
 # Topological strings
 
 A topological-string free energy is the canonical divergent series of the subject, and
-two Calabi-Yau geometries have one in closed form. This page makes both first-class so
-the rest of the package can be pointed at them.
+two Calabi-Yau geometries have one in closed form. Both are available here as ordinary
+series, so the rest of the package applies to them.
 
 `Resurgence.jl` is a **consumer** here. It never computes a Gromov-Witten or
 Gopakumar-Vafa invariant, never runs topological recursion, and never runs the
@@ -58,12 +58,12 @@ resolved_conifold_series
 
 ## Borel-plane data
 
-The gap series is the package's first example with **double** Borel poles. Two
-consequences: [`pade`](@ref) renders each as a coalescing pair of simple poles
-straddling the true location (so the pair's midpoint is the singularity, and the
-splitting is the diagnostic), and [`stokes_constant`](@ref)'s residue route does not
-apply, since it is exact for simple poles only. The exact Laurent data is available
-analytically from [`conifold_gap_stokes_data`](@ref) instead.
+The gap series is the package's first example with **double** Borel poles, which has two
+consequences. [`pade`](@ref) renders each as a coalescing pair of simple poles straddling the
+true location, so the pair's midpoint is the singularity and the splitting is the diagnostic.
+[`stokes_constant`](@ref)'s residue route does not apply, since it is exact for simple poles
+only; the exact Laurent data is available analytically from
+[`conifold_gap_stokes_data`](@ref) instead.
 
 ```@docs
 conifold_gap_borel

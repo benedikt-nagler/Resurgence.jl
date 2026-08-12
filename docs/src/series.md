@@ -9,7 +9,8 @@ arithmetic, truncation, differentiation and fractional power offsets. [`LogSerie
 adds a polynomial in ``\log\hbar``, which is what resonant problems produce.
 
 [`FormalSeries`](@ref)`(:name, n)` builds a named example from its exact recursion. These
-double as test oracles - the suite checks mathematical identities rather than stored numbers.
+double as test oracles, since the suite checks mathematical identities and not stored
+numbers.
 
 ```@autodocs
 Modules = [Resurgence]
