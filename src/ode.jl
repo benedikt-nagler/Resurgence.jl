@@ -42,6 +42,52 @@ function transseries_solve(seed::FormalSeries{T}, action::Number, solve_sector;
 end
 
 """
+    multi_transseries_solve(seed, actions, solve_sector; orders = 2, var = variable(seed))
+        -> MultiTransseries
+
+The `K`-parameter generalization of [`transseries_solve`](@ref): assemble
+``u = \\sum_{n ∈ ℤ_{≥0}^K} (\\prod_i σ_i^{n_i}) e^{-(n·A)/ħ}\\, Φ_n`` from its perturbative
+seed `Φ_0 =` `seed` over the action lattice `actions`, for every multi-index of total
+degree `1 … orders`. `solve_sector` is a closure
+`(sofar::Dict{NTuple{K,Int}}, n::NTuple{K,Int}) -> AbstractSeries` returning `Φ_n`; it is
+called in order of increasing `sum(n)`, so every strictly smaller multi-index is already
+in `sofar` (an absent key is an exact zero).
+
+Unlike the rank-1 driver this admits **resonance**: when the actions are ℤ-dependent,
+distinct multi-indices share an exponential weight and sectors acquire `log` blocks (see
+[`resonance_lattice`](@ref)). Return a [`LogSeries`](@ref) from `solve_sector` in that
+case - [`_solve_log_sector`](@ref) is the order-by-order primitive that produces one - and
+the assembled [`MultiTransseries`](@ref) carries the tower. The canonical instance is
+[`painleve1_two_parameter`](@ref).
+"""
+function multi_transseries_solve(seed::AbstractSeries, actions::Tuple, solve_sector;
+                                 orders::Integer = 2,
+                                 var::Symbol = variable(seed))
+    orders ≥ 0 || throw(InvalidArgument("need orders ≥ 0, got $orders"))
+    K = length(actions)
+    K ≥ 1 || throw(InvalidArgument("need rank K ≥ 1, got 0 actions"))
+    sectors = Dict{NTuple{K,Int},typeof(seed)}(ntuple(_ -> 0, K) => seed)
+    for total in 1:orders, idx in _multi_indices(K, total)
+        Φ = solve_sector(sectors, idx)
+        variable(Φ) == var ||
+            throw(TransseriesSolveError("sector $idx came back in variable " *
+                                        "$(variable(Φ)), expected $var"))
+        sectors[idx] = Φ
+    end
+    MultiTransseries(actions, sectors; var)
+end
+
+# every NTuple{K,Int} with nonnegative entries summing to `total`, lexicographic
+function _multi_indices(K::Int, total::Int)
+    K == 1 && return [(total,)]
+    out = NTuple{K,Int}[]
+    for first in total:-1:0, rest in _multi_indices(K - 1, total - first)
+        push!(out, (first, rest...))
+    end
+    out
+end
+
+"""
     _solve_linear_sector(apply_L, g, β, δ, N; free = Int[], freeval = 1) -> FormalSeries
 
 Order-by-order solution of a linear sector equation `apply_L(Φ) = g` for the fluctuation
@@ -73,4 +119,83 @@ function _solve_linear_sector(apply_L, g::FormalSeries{T}, β::Rational{Int},
         Φ = FormalSeries(c, variable(g); power_offset = β)
     end
     Φ
+end
+
+# -- the resonant (log-tower) sector solve ------------------------------------------
+
+# A sector operator 𝓛 acting on a log block picks up commutators, because ∂ hits log x:
+# with L = log x and ψ = w L^p,
+#   𝓛(w L^p) = L^p 𝓛(w) + p L^{p-1} C(w) + p(p-1) L^{p-2} D(w),
+# where C and D are the model's first- and second-order log commutators. Collecting L^p,
+# the block equations of 𝓛ψ = g are, descending in p,
+#   𝓛ψ^{[p]} = g^{[p]} - (p+1) C(ψ^{[p+1]}) - (p+2)(p+1) D(ψ^{[p+2]}),
+# which is why the tower is solved from the top down. Growth happens at the *kernel*: when
+# 𝓛 has a homogeneous solution on the grid, its position carries a vanishing diagonal, and
+# a nonzero residual there cannot be solved - it is instead cancelled by the C-term, which
+# fixes the free multiple of the homogeneous solution in the block *above*. That is the
+# same move `resonant_solve` makes for the channel equation (ħ²∂ + c)u = g.
+
+"""
+    _solve_log_sector(apply_L, apply_C, apply_D, g, β, δ, N; kernel = nothing,
+                      homog = nothing, freeval = 0) -> LogSeries
+
+Order-by-order solution of a resonant sector equation `apply_L(ψ) = g` for a `ψ` carrying
+a `log` tower, on the unit grid of length `N` with leading power `β` and diagonal shift
+`δ` (as in [`_solve_linear_sector`](@ref), which solves each individual log block).
+`apply_C` and `apply_D` are the operator's first- and second-order log commutators; pass
+`apply_D = nothing` when the operator is first order.
+
+`kernel` is the grid index at which `apply_L`'s diagonal vanishes and `homog` the
+corresponding homogeneous solution normalized to `1` there; with `kernel = nothing` the
+solve cannot grow the tower and only propagates the logs already present in `g`. Otherwise
+an unsolvable residual at `kernel` fixes the free multiple of `homog` one log block up -
+so the returned degree is `log_degree(g)` or `log_degree(g) + 1`. `freeval` is the value
+left at `kernel` in block `0`, the sector's own integration constant (the transseries
+parameter, hence `0` in every sector but the one that defines it).
+"""
+function _solve_log_sector(apply_L, apply_C, apply_D, g::LogSeries{T},
+                           β::Rational{Int}, δ::Integer, N::Integer;
+                           kernel::Union{Nothing,Integer} = nothing,
+                           homog::Union{Nothing,FormalSeries{T}} = nothing,
+                           freeval = zero(T)) where {T}
+    kernel === nothing && homog !== nothing &&
+        throw(InvalidArgument("_solve_log_sector needs a `kernel` index for `homog`"))
+    var = variable(g)
+    P = log_degree(g)
+    free = kernel === nothing ? Int[] : [Int(kernel)]
+    # the source and every block equation live on the output grid, at power β + δ. An
+    # absent log block comes back as a bare zero whose offset need not sit on that grid.
+    grid = FormalSeries(zeros(T, N), var; power_offset = β + δ)
+    pad = Φ -> _is_zero_series(Φ) ? grid : grid + Φ
+    # blocks[p+1] = ψ^{[p]}; two guard blocks above the top keep the recursion total
+    zeroblock = FormalSeries(zeros(T, N), var; power_offset = β)
+    blocks = FormalSeries{T}[zeroblock for _ in 1:(P + 4)]      # immutable, so shared
+    rhs_of = p -> begin
+        r = pad(log_block(g, p))
+        r = r - (p + 1) * pad(apply_C(blocks[p + 2]))
+        apply_D === nothing ? r :
+        r - ((p + 2) * (p + 1)) * pad(apply_D(blocks[p + 3]))
+    end
+    for p in (P + 1):-1:0
+        if kernel !== nothing && p ≤ P
+            # the residual at the vanishing diagonal fixes block p+1's free constant
+            pout = β + kernel + δ
+            r = _coeff_at(rhs_of(p), pout)
+            if !iszero(r)
+                homog === nothing &&
+                    throw(TransseriesSolveError("log block $p is obstructed at power " *
+                                                "$pout with residual $r, but no " *
+                                                "homogeneous solution was supplied"))
+                ch = _coeff_at(apply_C(homog), pout)
+                iszero(ch) &&
+                    throw(TransseriesSolveError("log block $p is obstructed at power " *
+                                                "$pout with residual $r, but the " *
+                                                "commutator cannot absorb it"))
+                blocks[p + 2] = blocks[p + 2] + (r / ((p + 1) * ch)) * homog
+            end
+        end
+        blocks[p + 1] = _solve_linear_sector(apply_L, rhs_of(p), β, δ, N;
+                                             free, freeval = p == 0 ? freeval : zero(T))
+    end
+    LogSeries(blocks[1:(P + 2)], var)
 end

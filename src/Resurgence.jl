@@ -30,7 +30,9 @@ export MultiTransseries, actions, n_actions, sector_indices, weight, is_resonant
 export pointed_alien_derivative
 export LogSeries, log_degree, log_blocks, log_block, derivative
 export resonance_lattice, resonance_depth, resonant_solve, charges
-export transseries_solve, painleve1, painleve1_action, painleve1_action_squared
+export transseries_solve, multi_transseries_solve
+export painleve1, painleve1_action, painleve1_action_squared
+export painleve1_two_parameter, painleve1_stokes_constant
 export conifold_gap_series, conifold_gap_borel, conifold_gap_actions
 export conifold_gap_stokes_data, resolved_conifold_series, resolved_conifold_actions
 export plot_borel_plane, plot_large_order, plot_optimal_truncation

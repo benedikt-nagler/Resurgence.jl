@@ -104,6 +104,117 @@
         @test weight(mt, (1, 0)) ≈ A
     end
 
+    @testset "two-parameter resonant transseries" begin
+        A = painleve1_action()
+        mt = painleve1_two_parameter(4; orders = 3)
+        @test mt isa MultiTransseries{BigFloat,BigFloat,2,LogSeries{BigFloat}}
+        @test actions(mt) == (A, -A)
+        # the (0,0) and (1,0) sectors reproduce the one-parameter solve
+        @test cf(log_block(sector(mt, (0, 0)), 0), -2) ≈ 1
+        @test cf(log_block(sector(mt, (0, 0)), 0), 8) ≈ -1 / 48
+        @test cf(log_block(sector(mt, (1, 0)), 0), 1 // 2) ≈ 1
+
+        @testset "the log tower starts at (2,1) and (1,2)" begin
+            for idx in ((0, 0), (1, 0), (0, 1), (2, 0), (1, 1), (0, 2), (3, 0), (0, 3))
+                @test log_degree(sector(mt, idx)) == 0
+            end
+            @test log_degree(sector(mt, (2, 1))) == 1
+            @test log_degree(sector(mt, (1, 2))) == 1
+        end
+
+        @testset "exact top-log coefficient κ = −10/√3" begin
+            # The (2,1) source lands on 𝓛₁'s kernel s^{1/2} with residual 5/3, which the
+            # log commutator absorbs at rate (c/16)·10A = √3/6, so κ = −(5/3)/(√3/6).
+            # This is what pins log s (not log ħ, not log z) as the tower's variable.
+            κ = cf(log_block(sector(mt, (2, 1)), 1), 1 // 2)
+            @test κ ≈ -10 / sqrt(big(3)) rtol = 1e-40
+            @test cf(log_block(sector(mt, (1, 2)), 1), 1 // 2) ≈ -κ rtol = 1e-40
+        end
+
+        @testset "every sector solves Painlevé I (residual oracle)" begin
+            for total in 0:3, idx in Resurgence._multi_indices(2, total)
+                res = Resurgence._painleve1_two_residual(mt, idx)
+                for blk in log_blocks(res), j in 0:9
+                    @test abs(blk[j]) < 1e-60
+                end
+            end
+        end
+
+        @testset "log degree is bounded by the resonance depth" begin
+            for total in 0:3, idx in Resurgence._multi_indices(2, total)
+                @test log_degree(sector(mt, idx)) ≤
+                      resonance_depth(mt, idx; lattice = [(1, 1)])
+            end
+            # The bound is strict on the diagonal: 𝓛₀ has no kernel, so the zero-weight
+            # sectors n = m never grow a log even though their depth is n.
+            @test log_degree(sector(mt, (1, 1))) == 0
+            @test resonance_depth(mt, (1, 1); lattice = [(1, 1)]) == 1
+        end
+
+        @testset "log degree 2 exercises the second commutator" begin
+            mt5 = painleve1_two_parameter(2; orders = 5)
+            @test log_degree(sector(mt5, (3, 2))) == 2
+            @test log_degree(sector(mt5, (2, 3))) == 2
+            @test log_degree(sector(mt5, (2, 2))) == 0     # diagonal stays log-free
+            for idx in ((3, 2), (2, 3), (4, 1))
+                res = Resurgence._painleve1_two_residual(mt5, idx)
+                for blk in log_blocks(res), j in 0:5
+                    @test abs(blk[j]) < 1e-60
+                end
+            end
+        end
+
+        @testset "multi_transseries_solve driver" begin
+            @test Resurgence._multi_indices(2, 2) == [(2, 0), (1, 1), (0, 2)]
+            @test length(Resurgence._multi_indices(3, 4)) == 15
+            bad = (sofar, idx) -> FormalSeries([1.0], :wrongvar)
+            seed = FormalSeries([1.0], :s)
+            @test_throws TransseriesSolveError multi_transseries_solve(seed, (1.0, -1.0),
+                                                                       bad; orders = 1)
+            @test_throws InvalidArgument painleve1_two_parameter(0)
+            @test_throws InvalidArgument painleve1_two_parameter(2; orders = -1)
+        end
+    end
+
+    @testset "Kapaev Stokes constant" begin
+        # S₁ = −i·3^{1/4}/(2√π), Garoufalidis-Its-Kapaev-Mariño 2010
+        target = -im * sqrt(sqrt(big(3))) / (2 * sqrt(big(π)))
+
+        # the fit's Γ is exact rational × √π, so the package needs no SpecialFunctions
+        for m in (0, 1, 5, 20)
+            @test Resurgence._gamma_half(m, BigFloat) ≈
+                  SpecialFunctions.gamma(m + 0.5) rtol = 1e-12
+        end
+
+        S1 = painleve1_stokes_constant(; nterms = 40)
+        @test abs(real(S1)) < 1e-40                    # purely imaginary
+        @test imag(S1) ≈ imag(target) rtol = 1e-12
+        # the one-instanton tail is what buys the digits: Richardson alone (H = 0) gets
+        # ~7e-5, the tail takes it past 1e-12
+        S0 = painleve1_stokes_constant(; nterms = 40, fluctuations = 0)
+        @test abs(S0 - target) > 1e-5
+        @test abs(S1 - target) < 1e-12
+
+        # The independent route: *measure* the jump. Borel–Padé sum Φ₀ on both sides of
+        # the positive real axis and divide by the one-instanton contribution. It is
+        # Padé-limited (~1e-6), and it sees only the +A singularity - so its agreement
+        # with the large-order fit is what pins that fit's factor of 2.
+        Sl = painleve1_stokes_constant(; method = :lateral, nterms = 26,
+                                       fluctuations = 30, ħ = 0.3, T = Float64)
+        @test abs(real(Sl)) < 1e-12
+        @test Sl ≈ target rtol = 1e-5
+        # Sl *is* disc/(e^{-A/ħ}Φ₁), and alien.jl's convention is
+        # disc(Φ₀) = −S₁ e^{-A/ħ} s(Φ₁): so the GIKM constant returned here is minus the
+        # one `alien_derivative`/`stokes_automorphism` expect.
+        @test -Sl ≈ im * sqrt(sqrt(3.0)) / (2 * sqrt(π)) rtol = 1e-5
+
+        @test_throws InvalidArgument painleve1_stokes_constant(; nterms = 5)
+        @test_throws InvalidArgument painleve1_stokes_constant(; fluctuations = -1)
+        @test_throws InvalidArgument painleve1_stokes_constant(; method = :nope)
+        @test_throws InvalidArgument painleve1_stokes_constant(; method = :lateral,
+                                                               ħ = -1.0, T = Float64)
+    end
+
     @testset "TransseriesSolveError" begin
         e = TransseriesSolveError("boom")
         @test e isa ResurgenceError
