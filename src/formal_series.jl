@@ -176,8 +176,7 @@ end
 
 The termwise derivative ``∂_x``: ``x^{β_0} \\sum a_n x^n \\mapsto x^{β_0 - 1}
 \\sum (β_0 + n) a_n x^n``. Exact in the coefficient type whenever the powers are
-integral. The companion operator ``x^2 ∂_x`` - the one that governs transseries sector
-equations, see [`resonant_solve`](@ref) - is `_shift_power(derivative(Φ), 2)`.
+integral. Fractional powers use the corresponding coefficient arithmetic.
 """
 function derivative(Φ::FormalSeries)
     β = Φ.power_offset

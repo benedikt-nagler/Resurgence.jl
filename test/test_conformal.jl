@@ -71,15 +71,15 @@
             # high-order reference (validated to ~1e-25 against Ai(1) in
             # test_laplace.jl)
             Φref = FormalSeries(BigFloat.(coefficients(FormalSeries(:airy, 220))))
-            ref = lateral_sum(borel(Φref), ħ; side = :plus, tilt = 3 // 10,
+            ref = laplace_sum(borel(Φref), ħ; θ = big"0.3",
                               rtol = big"1e-40")
             prev = nothing
             for n in (12, 20, 30)
                 Φ = FormalSeries(BigFloat.(coefficients(FormalSeries(:airy, n))))
                 B = borel(Φ)
-                plain = lateral_sum(B, pade(B), ħ; side = :plus, tilt = 3 // 10)
-                conf = lateral_sum(B, conformal_borel(B; zeta0 = -4 // 3), ħ;
-                                   side = :plus, tilt = 3 // 10)
+                plain = laplace_sum(B, pade(B), ħ; θ = big"0.3")
+                conf = laplace_sum(B, conformal_borel(B; zeta0 = -4 // 3), ħ;
+                                   θ = big"0.3")
                 err_plain = abs(plain - ref)
                 err_conf = abs(conf - ref)
                 @test err_conf < err_plain

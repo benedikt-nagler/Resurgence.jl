@@ -63,22 +63,6 @@
         @test coefficients(Φ) == [1, 1, 1//2, 1//6, 1//24]
     end
 
-    @testset "named transseries" begin
-        E = Transseries(:euler, 5)
-        @test action(E) == 1 && n_sectors(E) == 2
-        # Φ₀ is the ħ → −ħ mirror of FormalSeries(:euler): coefficients +k!
-        @test coefficients(sector(E, 0)) == [1, 1, 2, 6, 24]
-        @test power_offset(sector(E, 0)) == 1
-        @test sector(E, 1) == FormalSeries([1//1])
-        A = Transseries(:airy, 8)
-        @test action(A) == -4//3
-        @test sector(A, 0) == FormalSeries(:airy, 8)
-        @test sector(A, 1) == FormalSeries(:airy_bi, 8)
-        @test variable(Transseries(:euler, 3; var = :x)) == :x
-        @test_throws InvalidArgument Transseries(:nope, 3)
-        @test_throws InvalidArgument Transseries(:euler, 0)
-    end
-
     @testset "invalid" begin
         @test_throws InvalidArgument FormalSeries(:nope, 3)
         @test_throws InvalidArgument FormalSeries(:euler, 0)

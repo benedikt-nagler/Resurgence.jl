@@ -90,10 +90,10 @@ Resurgence.poles(::EulerDummyApprox; refine::Bool = true) = [Complex{BigFloat}(-
         # Float64 ħ keeps the on-ray tolerance loose enough for the Float64-π angle
         @test_throws PoleOnRay laplace_sum(B, dummy, -0.3; θ = Float64(π))
         # lateral sums and the Stokes discontinuity through the seam
-        @test lateral_sum(B, dummy, -ħ; θ = Float64(π), side = :plus) ≈
-              lateral_sum(B, -ħ; θ = Float64(π), side = :plus, order = 1) rtol = 1e-40
-        @test stokes_discontinuity(B, dummy, -ħ; θ = Float64(π)) ≈
-              stokes_discontinuity(B, -ħ; θ = Float64(π), order = 1) rtol = 1e-30
+        @test lateral_sum(B, dummy, -ħ; θ = big(π), side = :plus) ≈
+              lateral_sum(B, -ħ; θ = big(π), side = :plus, order = 1) rtol = 1e-40
+        @test stokes_discontinuity(B, dummy, -ħ; θ = big(π)) ≈
+              stokes_discontinuity(B, -ħ; θ = big(π), order = 1) rtol = 1e-30
     end
 
     @testset "Airy end-to-end: prefactor · borel_sum ≈ Ai(1) to ~30 digits" begin
@@ -117,16 +117,29 @@ Resurgence.poles(::EulerDummyApprox; refine::Bool = true) = [Complex{BigFloat}(-
             # Borel–Padé–Laplace of the asymptotic series at z = 1: the series is
             # in ħ = z^{-3/2} = 1, with ξ = 2/(3ħ) = 2/3. High-order Padé grows
             # spurious Froissart pole–zero doublets near the positive axis, so
-            # integrate on a tilted ray (exact by contour deformation - the true
-            # Borel function is analytic off the cut ζ ≤ -4/3).
+            # evaluate the approximant on an explicit regular ray. Crossing those
+            # spurious poles is not an exact lateral deformation of the approximant.
             Φ = FormalSeries(:airy, 220)
             Φb = FormalSeries(BigFloat.(coefficients(Φ)))
             ħ = big"1.0"
             ξ = 2 / (3ħ)
             prefactor = exp(-ξ) / (2 * sqrt(big(π)))     # z^{1/4} = 1 at z = 1
-            s = prefactor * lateral_sum(borel(Φb), ħ; side = :plus, tilt = 3//10,
+            s = prefactor * laplace_sum(borel(Φb), ħ; θ = big"0.3",
                                         rtol = big"1e-40")
             @test abs(s - ai1) / abs(ai1) < big"1e-25"
         end
     end
+end
+
+@testset "contour deformation requires a singularity-free sector" begin
+    B = borel(FormalSeries([1.0,1.0];power_offset=1))
+    a = exp(0.03im)
+    r = PadeApproximant(ComplexF64[1],ComplexF64[1,-1/a],:zeta)
+    @test_throws InvalidArgument lateral_sum(B,r,0.2;side=:plus,tilt=0.1)
+    @test lateral_sum(B,r,0.2;side=:plus,tilt=0.01) ≈
+          laplace_sum(B,r,0.2;θ=0.0) rtol=1e-10
+    @test_throws InvalidArgument laplace_sum(B,r,0.0)
+    fractional = borel(FormalSeries([1.0];power_offset=1//2))
+    constant = PadeApproximant([1.0],[1.0],:zeta)
+    @test_throws InvalidArgument laplace_sum(fractional,constant,0.2;θ=2pi)
 end

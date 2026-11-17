@@ -1,10 +1,7 @@
-```@meta
-CurrentModule = Resurgence
-```
+# Series and summation API
 
-# API index
-
-Everything exported by the package, alphabetically.
-
-```@index
+```@autodocs
+Modules = [Resurgence]
+Private = false
+Pages = ["formal_series.jl", "named_series.jl", "borel.jl", "pade.jl", "laplace.jl", "errors.jl"]
 ```

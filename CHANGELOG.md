@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased reduction (2026-10-26)
+
+The development tree removes transseries, alien/resonant model layers, topological strings,
+hyperasymptotic re-expansion and multi-saddle fitting. Historical entries below describe
+older versions. Removed work is preserved in `archive/2026-10-26-reduction/`.
+
+
 All notable changes to this project are documented in this file. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to
 [semantic versioning](https://semver.org/spec/v2.0.0.html).

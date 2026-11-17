@@ -13,42 +13,25 @@ using QuadGK: quadgk
 using PrecompileTools: @setup_workload, @compile_workload
 
 export ResurgenceError, InvalidArgument, IncompatibleSeries, DegeneratePade, PoleOnRay
-export NoSingularityFound, TransseriesSolveError
+export NoSingularityFound
 export AbstractSeries, FormalSeries, BorelSeries, PadeApproximant
 export AbstractBorelApproximant
-export n_terms, coefficients, variable, power_offset, is_exact, evaluate
+export n_terms, coefficients, variable, power_offset, is_exact, evaluate, derivative
 export borel, inverse_borel
 export pade, poles, residues, borel_pade_poles, numerator_degree, denominator_degree
 export laplace_sum, lateral_sum, stokes_discontinuity, borel_sum
 export richardson, large_order_fit, accelerate, partial_sums
 export ConformalMap, ConformalPade, conformal_map, conformal_borel, inverse
 export subtract_singularity
-export dingle_terminant, optimal_truncation, hyper_sum
-export Transseries, action, n_sectors, sector, sectors, transseries_sum
-export stokes_constant, alien_derivative, stokes_automorphism, median_sum
-export MultiTransseries, actions, n_actions, sector_indices, weight, is_resonant
-export pointed_alien_derivative
-export LogSeries, log_degree, log_blocks, log_block, derivative
-export resonance_lattice, resonance_depth, resonant_solve, charges
-export transseries_solve, multi_transseries_solve
-export painleve1, painleve1_action, painleve1_action_squared
-export painleve1_two_parameter, painleve1_stokes_constant
-export conifold_gap_series, conifold_gap_borel, conifold_gap_actions
-export conifold_gap_stokes_data, resolved_conifold_series, resolved_conifold_actions
+export optimal_truncation
+export median_sum
 export plot_borel_plane, plot_large_order, plot_optimal_truncation
 export plot_borel_plane!, plot_large_order!, plot_optimal_truncation!
 export aaa_approximant, aaa_borel
 
 include("errors.jl")
 include("formal_series.jl")
-include("log_series.jl")
-include("transseries.jl")
-include("multi_transseries.jl")
-include("resonance.jl")
 include("named_series.jl")
-include("ode.jl")
-include("painleve.jl")
-include("topological_string.jl")
 include("borel.jl")
 include("pade.jl")
 include("laplace.jl")
@@ -56,9 +39,7 @@ include("large_order.jl")
 include("acceleration.jl")
 include("conformal.jl")
 include("singularities.jl")
-include("hyperasymptotics.jl")
-include("alien.jl")
-include("multi_alien.jl")
+include("optimal_truncation.jl")
 include("show.jl")
 
 """
@@ -184,21 +165,6 @@ end
         Φ + Φ
         Φ * Φ
         sprint(show, Φ)
-        F = Transseries(:euler, 12)
-        alien_derivative(F; stokes = -2 * BigFloat(π) * im)
-        F + F
-        sprint(show, F)
-        mt = MultiTransseries(F)
-        alien_derivative(mt; stokes = -2 * BigFloat(π) * im)
-        mt + mt
-        sprint(show, mt)
-        L = resonant_solve(FormalSeries([0 // 1, 1 // 1]), 0 // 1)   # (ħ²∂)u = ħ ⇒ log ħ
-        L * L
-        resonance_lattice((1 // 1, -1 // 1))
-        rt = MultiTransseries((1 // 1, -1 // 1), Dict((1, 0) => L, (0, 0) => L))
-        sprint(show, rt)
-        FormalSeries(:painleve1, 6)
-        painleve1(3; sectors = 2)
     end
 end
 

@@ -16,7 +16,7 @@ The conformal map of the ζ-plane cut along ``\\{t\\,ζ_0 : t ≥ 1\\}`` (and, w
   inverse ``ζ(w) = 2ζ_0\\, w/(1+w^2)``.
 
 Non-symmetric singularity pairs at arbitrary angles are out of scope - use the AAA
-extension or the multi-saddle [`large_order_fit`](@ref) in that regime. Callable:
+extension with independently supplied sampling information in that regime. Callable:
 `m(ζ)` evaluates the forward map (in complex arithmetic); [`inverse`](@ref) maps
 back. Construct with [`conformal_map`](@ref) or via [`conformal_borel`](@ref).
 """

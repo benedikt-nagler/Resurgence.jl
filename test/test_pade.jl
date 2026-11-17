@@ -100,3 +100,24 @@
         @test ζa[1] ≈ -4 // 3 atol = 1e-2
     end
 end
+
+@testset "close quadratic poles retain caller precision" begin
+    setprecision(256) do
+        d = big"1e-60"
+        r = PadeApproximant(Complex{BigFloat}[1],Complex{BigFloat}[1,-2,1-d],:zeta)
+        got = sort(real.(poles(r));by=identity)
+        # Compare with the represented polynomial, not an unrounded intended d.
+        represented = 1-real(r.q[3])
+        expected = setprecision(512) do
+            sort([1/(1+sqrt(represented)),1/(1-sqrt(represented))])
+        end
+        @test got[1] < got[2]
+        @test maximum(abs.(got.-expected)) < big"1e-70"
+    end
+end
+
+@testset "multiple denominator zeros are not simple residues" begin
+    repeated = PadeApproximant([1.0],[1.0,-2.0,1.0],:zeta)
+    @test poles(repeated) == Complex{BigFloat}[1,1]
+    @test_throws InvalidArgument residues(repeated)
+end

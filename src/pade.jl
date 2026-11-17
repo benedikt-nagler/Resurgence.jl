@@ -154,10 +154,11 @@ end
 """
     poles(r::PadeApproximant; refine = true) -> Vector{Complex}
 
-Zeros of the denominator ``q``: located via the companion-matrix eigenvalues in
-`ComplexF64`, then (with `refine = true`) polished by Newton iteration in
-`Complex{BigFloat}`. Sorted by absolute value - for a Borel–Padé approximant the
-smallest is the leading Borel singularity.
+Locate denominator zeros, sorted by modulus.
+Linear and quadratic denominators use BigFloat formulas.
+Higher degrees use Float64 companion seeds and optional BigFloat Newton refinement.
+Closely spaced or ill-conditioned higher-degree roots need independent checks.
+A small polynomial residual does not certify root locations or multiplicities.
 """
 function poles(r::PadeApproximant; refine::Bool = true)
     # trim trailing zero denominator coefficients: a reduced Padé (or an exact
@@ -166,20 +167,31 @@ function poles(r::PadeApproximant; refine::Bool = true)
     M = something(findlast(!iszero, r.q), 1) - 1
     M == 0 && return Complex{BigFloat}[]
     qtrim = r.q[1:(M + 1)]
-    q64 = ComplexF64.(Complex{BigFloat}.(qtrim))
-    # companion matrix of q normalized to monic
-    C = zeros(ComplexF64, M, M)
-    for i in 2:M
-        C[i, i - 1] = 1
+    qb = Complex{BigFloat}.(qtrim)
+    out = if M == 1
+        [-qb[1]/qb[2]]
+    elseif M == 2
+        c,b,a = qb
+        d = sqrt(b*b - 4a*c)
+        t = -(abs(b+d) >= abs(b-d) ? b+d : b-d)/2
+        iszero(t) ? [zero(a),zero(a)] : [t/a,c/t]
+    else
+        # Higher degree still uses Float64 seeds. Refinement is not a root enclosure.
+        q64 = ComplexF64.(qb ./ last(qb))
+        all(isfinite,q64) || throw(InvalidArgument(
+            "denominator cannot be seeded in Float64; rescale or use a lower-degree approximant"))
+        C = zeros(ComplexF64,M,M)
+        for i in 2:M
+            C[i,i-1] = 1
+        end
+        C[:,M] .= -q64[1:M]
+        Complex{BigFloat}.(LinearAlgebra.eigvals(C))
     end
-    C[:, M] .= -q64[1:M] ./ q64[M + 1]
-    ζs = LinearAlgebra.eigvals(C)
-    out = Complex{BigFloat}[Complex{BigFloat}(z) for z in ζs]
-    if refine
+    if refine && M > 2
         qb = Complex{BigFloat}.(qtrim)
         dqb = [k * qb[k + 1] for k in 1:M]
         for (i, z) in pairs(out)
-            for _ in 1:8
+            for _ in 1:64
                 dq = _horner(dqb, z)
                 iszero(dq) && break
                 step = _horner(qb, z) / dq
@@ -196,13 +208,16 @@ end
     residues(r::PadeApproximant; refine = true) -> Vector{Pair}
 
 Pairs `ζ₀ => p(ζ₀)/q′(ζ₀)` for each simple pole of `r`, in the order of
-[`poles`](@ref). This is the data alien derivatives consume (M2).
+[`poles`](@ref). This formula requires simple denominator zeros.
 """
 function residues(r::PadeApproximant; refine::Bool = true)
     ζs = poles(r; refine)
     pb = Complex{BigFloat}.(r.p)
     qb = Complex{BigFloat}.(r.q)
     dqb = [k * qb[k + 1] for k in 1:denominator_degree(r)]
+    for z in ζs
+        iszero(_horner(dqb,z)) && throw(InvalidArgument("residues requires simple denominator zeros"))
+    end
     [ζ => _horner(pb, ζ) / _horner(dqb, ζ) for ζ in ζs]
 end
 

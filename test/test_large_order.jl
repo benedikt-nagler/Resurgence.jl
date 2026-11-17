@@ -32,3 +32,8 @@
                                                                    1//1, 1//1]))
     end
 end
+
+@testset "invalid action moduli remain unresolved" begin
+    @test_throws InvalidArgument large_order_fit(FormalSeries(:exp,20); order = 0)
+    @test_throws InvalidArgument large_order_fit(FormalSeries(fill(1//1, 12)))
+end

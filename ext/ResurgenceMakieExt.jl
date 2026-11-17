@@ -189,17 +189,11 @@ end
 
 # ─── Optimal truncation (superasymptotic U-curve) ─────────────────────────────
 
-# Term magnitudes |aₙ ħ^{pₙ}| reconstructed from the partial sums, and the
+# Direct term magnitudes |aₙ ħ^{pₙ}| and the
 # optimal truncation order N⋆ (index of the smallest term).
 function _truncation_terms(Φ::FormalSeries, ħ)
-    ps = partial_sums(Φ, ħ)
-    terms = abs.(diff(vcat(zero(first(ps)), ps)))
-    Nstar = try
-        optimal_truncation(Φ, ħ).N
-    catch
-        argmin(terms) - 1
-    end
-    Float64.(terms), Int(Nstar)
+    terms = abs.(Resurgence._term_values(Φ, ħ))
+    Float64.(terms), Int(optimal_truncation(Φ, ħ).N)
 end
 
 """

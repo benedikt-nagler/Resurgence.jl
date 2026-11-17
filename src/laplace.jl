@@ -35,7 +35,8 @@ _real_float_type(ħ::Number) = typeof(float(real(ħ)))
 function _pole_on_ray(ζs, θ, tol)
     for ζ in ζs
         iszero(ζ) && continue
-        Δ = mod(angle(ζ) - θ + π, 2π) - π
+        T = promote_type(typeof(float(real(ζ))), typeof(float(θ)))
+        Δ = mod(T(angle(ζ)) - T(θ) + T(pi), 2T(pi)) - T(pi)
         abs(Δ) < tol && return ζ
     end
     nothing
@@ -85,13 +86,19 @@ end
 function _laplace_integral(B::BorelSeries, r::AbstractBorelApproximant, ħ::Number,
                            θ::Real, rtol::Real)
     T = _real_float_type(ħ)
+    isfinite(ħ) && !iszero(ħ) || throw(InvalidArgument("hbar must be finite and nonzero"))
+    isfinite(θ) && isfinite(rtol) && rtol > 0 ||
+        throw(InvalidArgument("ray angle must be finite and rtol must be finite and positive"))
+    !isinteger(B.beta) && !(-T(pi) < θ <= T(pi)) &&
+        throw(InvalidArgument("fractional Borel powers require a ray on the principal branch"))
     real(cis(θ) / ħ) > 0 ||
         throw(InvalidArgument("e^{-ζ/ħ} does not decay along θ = $θ for ħ = $ħ"))
     eiθ = cis(T(θ))
     β = T(B.beta)
     # ζ = t e^{iθ}:  ∫ e^{-t e^{iθ}/ħ} (t e^{iθ})^{β-1} r(t e^{iθ}) e^{iθ} dt
     integrand = t -> exp(-t * eiθ / ħ) * (t * eiθ)^(β - 1) * r(t * eiθ) * eiθ
-    val, _ = quadgk(integrand, zero(T), T(Inf); rtol)
+    val, err = quadgk(integrand, zero(T), T(Inf); rtol)
+    err <= rtol*abs(val) || throw(InvalidArgument("Laplace quadrature did not reach its requested tolerance"))
     Complex{T}(B.constant_term) + val / _gamma(β)
 end
 
@@ -102,8 +109,8 @@ end
 Lateral Borel sum on a Stokes ray: integrates along the tilted ray
 ``θ ± \\mathrm{tilt}`` (`side = :plus` above, `:minus` below). Because the Padé
 approximant is meromorphic, the value is independent of `tilt` as long as no pole
-lies between the tilted ray and ``θ`` - it *is* the lateral sum, not an
-approximation to it. The `lateral_sum(B, r::AbstractBorelApproximant, ħ; …)`
+lies between the tilted ray and ``θ``. Known singularities in that sector are refused.
+The quadrature sums the approximant, not a certified continuation of the original series. The `lateral_sum(B, r::AbstractBorelApproximant, ħ; …)`
 method takes an explicit approximant, like [`laplace_sum`](@ref).
 """
 function lateral_sum(B::BorelSeries, ħ::Number; θ::Real = 0, side::Symbol = :plus,
@@ -117,9 +124,22 @@ function lateral_sum(B::BorelSeries, r::AbstractBorelApproximant, ħ::Number;
                      rtol::Union{Nothing,Real} = nothing)
     side in (:plus, :minus) ||
         throw(InvalidArgument("side must be :plus or :minus, got :$side"))
-    tilt > 0 || throw(InvalidArgument("tilt must be > 0, got $tilt"))
+    isfinite(tilt) && 0 < tilt < pi/2 ||
+        throw(InvalidArgument("tilt must be finite and lie in (0, pi/2)"))
     T = _real_float_type(ħ)
-    θtilted = T(θ) + (side === :plus ? T(tilt) : -T(tilt))
+    delta = side === :plus ? T(tilt) : -T(tilt)
+    θtilted = T(θ) + delta
+    tolerance = 100eps(T)
+    for pole in poles(r)
+        iszero(pole) && throw(InvalidArgument("Borel approximant is singular at the origin"))
+        phase = mod(T(angle(pole)) - T(θ) + T(pi), 2T(pi)) - T(pi)
+        if abs(phase-delta) <= tolerance
+            throw(PoleOnRay(ComplexF64(pole),Float64(θtilted)))
+        end
+        if tolerance < sign(delta)*phase < abs(delta)
+            throw(InvalidArgument("a known Borel singularity lies between the base and tilted rays; decrease tilt"))
+        end
+    end
     _laplace_integral(B, r, ħ, θtilted, rtol === nothing ? eps(T)^(3//4) : rtol)
 end
 
@@ -154,4 +174,18 @@ function borel_sum(Φ::FormalSeries, ħ::Number;
                    beta::Union{Rational{Int},Integer} = power_offset(Φ),
                    kwargs...)
     laplace_sum(borel(Φ; beta), ħ; kwargs...)
+end
+
+"""
+    median_sum(Φ::FormalSeries, ħ; beta = power_offset(Φ), θ = 0, kwargs...)
+
+Average the two lateral sums of one supplied series.
+This arithmetic average does not construct a general transseries median resummation.
+"""
+function median_sum(Φ::FormalSeries, ħ::Number;
+                    beta::Union{Rational{Int},Integer} = power_offset(Φ),
+                    θ::Real = 0, kwargs...)
+    B = borel(Φ; beta)
+    (lateral_sum(B, ħ; θ, side = :plus, kwargs...) +
+     lateral_sum(B, ħ; θ, side = :minus, kwargs...))/2
 end
